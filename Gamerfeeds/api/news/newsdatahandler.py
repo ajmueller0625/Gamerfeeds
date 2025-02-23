@@ -31,6 +31,14 @@ class NewsDataHandler:
                 news_data = response.json()
                 self.export_news_data(news_data)
 
+    def get_raw_html(self, url: str) -> str:
+        try:
+            response = requests.get(url=url)
+            raw_html = response.text
+            return raw_html
+        except RequestException as e:
+            raise RequestException(f'Request failed fetching raw html: {e}')
+
     def export_news_data(self, data: list) -> None:
         try:
             with open('news/newsApi.json', 'w', encoding='utf-8') as json_file:
