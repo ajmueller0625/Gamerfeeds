@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, func, ForeignKey, Text
+from sqlalchemy import String, func, ForeignKey, Text, DateTime
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -11,10 +11,11 @@ class Users(Base):
     __tablename__ = 'users'
 
     username: Mapped[str] = mapped_column(
-        String(50), nullable=False, unique=True)
+        String(100), nullable=False, unique=True)
     firstname: Mapped[str] = mapped_column(String(100), nullable=False)
     lastname: Mapped[str] = mapped_column(String(100), nullable=False)
-    email: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
+    email: Mapped[str] = mapped_column(
+        String(255), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     registered_date: Mapped[datetime] = mapped_column(
         server_default=func.now(), nullable=False)
@@ -49,6 +50,7 @@ class News(Base):
     source_url: Mapped[str] = mapped_column(
         String(255), nullable=False, unique=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    published: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     # Relationships
     author: Mapped['Authors'] = relationship(back_populates='news')
