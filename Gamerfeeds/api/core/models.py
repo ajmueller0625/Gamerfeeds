@@ -24,7 +24,7 @@ class Users(Base):
 class Authors(Base):
     __tablename__ = 'authors'
 
-    name: Mapped[str] = mapped_column(String(255), nullable=True, unique=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
 
     # Relationships
     news: Mapped[list['News']] = relationship(back_populates='author')

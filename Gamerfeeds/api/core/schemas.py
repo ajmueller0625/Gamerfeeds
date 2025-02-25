@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 
 
 class UserSchema(BaseModel):
@@ -9,6 +9,8 @@ class UserSchema(BaseModel):
     email: EmailStr
     password: str = Field(..., max_length=255)
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class NewsSchema(BaseModel):
     title: str = Field(..., min_length=5, max_length=255)
@@ -16,6 +18,22 @@ class NewsSchema(BaseModel):
     image_url: str = Field(..., max_length=255)
     author: str = Field(..., min_length=5, max_length=255)
     source_name: str = Field(..., min_length=3, max_length=255)
-    url: str = Field(..., max_length=255)
+    source_url: str = Field(..., max_length=255)
     content: str
     published: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class NewsResponseSchema(BaseModel):
+    id: int
+    title: str
+    description: str | None = None
+    image_url: str
+    source_url: str
+    content: str
+    published: datetime
+    author_id: int
+    source_name_id: int
+
+    model_config = ConfigDict(from_attributes=True)
