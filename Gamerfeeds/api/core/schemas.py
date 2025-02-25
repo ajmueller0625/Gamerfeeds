@@ -12,10 +12,10 @@ class UserSchema(BaseModel):
 
 class NewsSchema(BaseModel):
     title: str = Field(..., min_length=5, max_length=255)
-    description: str
+    description: str | None = None
     image_url: str = Field(..., max_length=255)
     author: str = Field(..., min_length=5, max_length=255)
-    source_name: str = Field(..., min_length=5, max_length=255)
+    source_name: str = Field(..., min_length=3, max_length=255)
     url: str = Field(..., max_length=255)
     content: str
     published: datetime
