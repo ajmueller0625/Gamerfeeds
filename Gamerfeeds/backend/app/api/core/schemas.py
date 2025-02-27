@@ -37,3 +37,23 @@ class NewsResponseSchema(BaseModel):
     source_name_id: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AuthorSchema(BaseModel):
+    name: str = Field(..., min_length=10, max_length=255)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AuthorResponseSchema(AuthorSchema):
+    id: int
+
+
+class SourceNameSchema(BaseModel):
+    name: str = Field(..., min_length=3, max_length=100)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SourceNameResponseSchema(SourceNameSchema):
+    id: int
