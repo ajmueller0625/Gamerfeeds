@@ -1,18 +1,18 @@
 from fastapi import Depends, APIRouter, HTTPException, status
 from sqlalchemy import insert, select, update, delete
 from sqlalchemy.orm import Session, joinedload, selectinload
-from api.db_setup import get_db
+from app.db_setup import get_db
 
-from api.core.models import Authors, SourceNames, News
+from app.api.core.models import Authors, SourceNames, News
 
-from api.core.schemas import NewsSchema, NewsResponseSchema
+from app.api.core.schemas import NewsSchema, NewsResponseSchema
 
 router = APIRouter(tags=['News'])
 
 
 @router.get('/news', status_code=200)
 def get_all_news(db: Session = Depends(get_db)):
-    all_news = db.scalars(select(News).all())
+    all_news = db.scalars(select(News)).all()
     if not all_news:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail='No news found')

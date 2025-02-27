@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from api.core.endpoints.news import router as news_router
+from app.api.core.endpoints.news import router as news_router
 
 
 router = APIRouter()

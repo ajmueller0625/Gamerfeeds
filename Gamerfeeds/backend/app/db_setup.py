@@ -1,8 +1,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from api.core.models import Base
-from api.settings import settings
+from app.api.core.models import Base
+from app.settings import settings
 
 engine = create_engine(f'{settings.DB_URL}', echo=True)
 
