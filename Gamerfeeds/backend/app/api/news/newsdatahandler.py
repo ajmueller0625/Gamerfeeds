@@ -1,27 +1,31 @@
+import re
 import requests
-import json
 import openai
-from os import getenv
-from dotenv import load_dotenv
 from newspaper import Article
 from requests import RequestException
 
 
 class NewsDataHandler:
-    def __init__(self, api_key: str, openai_key: str):
+    def __init__(self, api_key: str, openai_key: str, query: str, domains: str, sortBy: str = 'publishedAt', language: str = 'en', pageSize: int = 100):
         self.api_key = api_key
         self.openai_key = openai_key
+        self.query = query
+        self.domains = domains
+        self.sortBy = sortBy
+        self.language = language
+        self.pageSize = pageSize
 
     # Method for fetching news data using NewsAPI
     def fetch_game_news(self) -> list:
         try:
             url = "https://newsapi.org/v2/everything"
             params = {
-                "q": "gaming OR video games",
-                "domains": "ign.com,kotaku.com,polygon.com,gamespot.com,pcgamer.com,gameinformer.com",
-                "language": "en",
-                "sortBy": "publishedAt",
-                "apiKey": self.api_key
+                'q': self.query,
+                'domains': self.domains,
+                'language': self.language,
+                'sortBy': self.sortBy,
+                'apiKey': self.api_key,
+                'pageSize': self.pageSize
             }
 
             response = requests.get(url=url, params=params)
@@ -47,8 +51,12 @@ class NewsDataHandler:
     # Method that uses OpenAI to extract the main article content
     def get_clean_article(self, content: str) -> str:
         prompt = (
-            "Extract the main article content and remove unnecessary text"
-            f"{content[:4000]}"  # Limit input length for GPT processing
+            '''
+            Extract the main content, remove video and photograph references, and remove unnecessary text. 
+            Add html elements if it is needed but exclude <html>, <head> and <body> because 
+            it is going to be used later inside an html <p> element.
+            '''
+            f'{content[:4000]}'  # Limit input length for GPT processing
         )
 
         try:
@@ -64,29 +72,21 @@ class NewsDataHandler:
             raise RuntimeError(f'OpenAI API error: {e}')
 
     # A test method that exports data to a json file
-    def export_news_data(self, articles: list) -> None:
+    def export_news_data(self, articles: list) -> list:
         cleaned_data = []
 
         for article in articles:
+            # Check if the string contains parentheses
+            if '(' in article['author'] and ')' in article['author']:
+                # Use regex to extract the name inside parentheses
+                pattern = r'\((.*?)\)'
+                author = re.search(pattern, article['author'])
+                article['author'] = author.group(1)
+
             article['sourceName'] = article['source']['name']
             content = self.get_content_data(article['url'])
             article['content'] = self.get_clean_article(content)
             del article['source']
             cleaned_data.append(article)
 
-        try:
-            with open('news/newsApi.json', 'w', encoding='utf-8') as json_file:
-                json.dump(cleaned_data, json_file, indent=4)
-            print('News data successfully saved.')
-        except IOError as e:
-            raise RuntimeError(f'Error writing data to JSON file: {e}')
-
-
-if __name__ == '__main__':
-    load_dotenv()
-    api_key = getenv('NEWS_API_KEY')
-    openai_key = getenv('OPENAI_KEY')
-
-    newsData = NewsDataHandler(api_key=api_key, openai_key=openai_key)
-    articles = newsData.fetch_game_news()
-    newsData.export_news_data(articles=articles)
+        return cleaned_data

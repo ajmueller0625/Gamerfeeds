@@ -58,5 +58,5 @@ class News(Base):
         'authors.id', ondelete='CASCADE'), nullable=False)
 
     source_name: Mapped['SourceNames'] = relationship(back_populates='news')
-    source_name_id: Mapped[int] = mapped_column(ForeignKey(
+    source_id: Mapped[int] = mapped_column(ForeignKey(
         'source_names.id', ondelete='CASCADE'), nullable=False)

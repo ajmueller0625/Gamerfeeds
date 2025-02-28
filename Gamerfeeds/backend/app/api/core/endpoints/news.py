@@ -1,6 +1,6 @@
 from fastapi import Depends, APIRouter, HTTPException, status
-from sqlalchemy import insert, select, update, delete
-from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 from app.api.db_setup import get_db
 
 from app.api.core.models import Authors, SourceNames, News
@@ -44,7 +44,7 @@ def add_news(news: NewsSchema, db: Session = Depends(get_db)):
             SourceNames.name == news.source_name)).first()
 
     new_news = News(
-        **news.model_dump(exclude={'author', 'source_name'}), author_id=author_id, source_name_id=source_id)
+        **news.model_dump(exclude={'author', 'source_name'}), author_id=author_id, source_id=source_id)
     db.add(new_news)
     db.commit()
 
@@ -84,7 +84,7 @@ def add_author(author: AuthorSchema, db: Session = Depends(get_db)):
     return new_author
 
 
-@router.get('news/sources/names', status_code=status.HTTP_200_OK)
+@router.get('/news/sources/names', status_code=status.HTTP_200_OK)
 def get_all_source_names(db: Session = Depends(get_db)):
     all_sources_names = db.scalars(select(SourceNames)).all()
     if not all_sources_names:
