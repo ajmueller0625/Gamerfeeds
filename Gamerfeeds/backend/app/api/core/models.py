@@ -16,7 +16,7 @@ class Users(Base):
     lastname: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str] = mapped_column(
         String(255), nullable=False, unique=True)
-    password: Mapped[str] = mapped_column(String(255), nullable=False)
+    hash_password: Mapped[str] = mapped_column(String(255), nullable=False)
     registered_date: Mapped[datetime] = mapped_column(
         server_default=func.now(), nullable=False)
 
@@ -45,8 +45,7 @@ class News(Base):
     title: Mapped[str] = mapped_column(
         String(255), nullable=False, unique=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    image_url: Mapped[str] = mapped_column(
-        String(255), nullable=False, unique=True)
+    image_url: Mapped[str] = mapped_column(String(255), nullable=False)
     source_url: Mapped[str] = mapped_column(
         String(255), nullable=False, unique=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
