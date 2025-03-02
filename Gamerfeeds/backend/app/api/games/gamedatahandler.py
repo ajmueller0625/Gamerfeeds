@@ -1,11 +1,12 @@
 from typing import Any, Dict, List
 import requests
+import json
 
 
 class GameDataHandler:
     def __init__(self, client_id: str, client_secret: str) -> None:
         """
-        Initialize the IGDB Games API wrapper.
+        Initialize the GameDataHandler.
 
         Args:
             client_id (str): Your Twitch client ID
@@ -20,5 +21,12 @@ class GameDataHandler:
     def authenticate(self) -> bool:
         pass
 
-    def fetch_games_data(self) -> List[Dict[str, Any]]:
+    def ensure_token(self) -> bool:
+        pass
+
+    def fetch_games_data(self, query: str, fields: str) -> List[Dict[str, Any]]:
+        pass
+
+    # A test method
+    def export_data_to_json(self) -> None:
         pass
