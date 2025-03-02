@@ -1,6 +1,8 @@
-from typing import Any, Dict, List
 import requests
 import json
+from typing import Any, Dict, List
+from datetime import datetime, timedelta
+from requests import RequestException
 
 
 class GameDataHandler:
@@ -18,8 +20,31 @@ class GameDataHandler:
         self.access_token = None
         self.token_expiration = None
 
-    def authenticate(self) -> bool:
-        pass
+    def authenticate(self) -> None:
+        """
+        Authenticate with the Twitch API to get an access token for IGDB.
+
+        Raises:
+            RequestException: if authentication request fails
+        """
+        auth_url = 'https://id.twitch.tv/oauth2/token'
+        payload = {
+            'client_id': self.client_id,
+            'client_secret': self.client_secret,
+            'grant_type': 'client_credentials'
+        }
+
+        response = requests.post(auth=auth_url, data=payload)
+
+        if response.status_code == 200:
+            data = response.json()
+            self.access_token = data['access_token']
+            # Set expiration time (60 days subtract by 1 day in seconds)
+            self.token_expiration = datetime.now(
+            ) + timedelta(seconds=data['expires_in'] - 86400)
+        else:
+            raise RequestException(
+                f'Authentication failed: {response.status_code} - {response.text}')
 
     def ensure_token(self) -> bool:
         pass
