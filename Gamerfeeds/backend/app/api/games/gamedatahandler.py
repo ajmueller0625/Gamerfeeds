@@ -111,7 +111,7 @@ class GameDataHandler:
             List[Dict[str, Any]]: List of top-rated games
         """
         query_body = f'where aggregated_rating != null; sort aggregated_rating desc; limit {limit}'
-        fields = 'name,first_release_date,genres.name,language_supports.language.name,platforms.name,screenshots.url,storyline,summary,aggregated_rating,videos.video_id,cover.url,involved_companies.company.name'
+        fields = 'name,first_release_date,genres.name,language_supports.language.name,platforms.name,screenshots.image_id,storyline,summary,aggregated_rating,videos.video_id,cover.image_id,involved_companies.company.name'
 
         return self.fetch_games_data(fields=fields, query_body=query_body)
 
@@ -132,7 +132,7 @@ class GameDataHandler:
         unix_timestamp = int(past_date.timestamp())
 
         query_body = f'where first_release_date >= {unix_timestamp} & first_release_date <= {int(current_time.timestamp())}; sort first_release_date desc; limit {limit}'
-        fields = 'name,first_release_date,genres.name,language_supports.language.name,platforms.name,screenshots.url,storyline,summary,aggregated_rating,videos.video_id,cover.url,involved_companies.company.name'
+        fields = 'name,first_release_date,genres.name,language_supports.language.name,platforms.name,screenshots.image_id,storyline,summary,aggregated_rating,videos.video_id,cover.image_id,involved_companies.company.name'
 
         return self.fetch_games_data(fields=fields, query_body=query_body)
 
@@ -154,7 +154,7 @@ class GameDataHandler:
         future_timestamp = int(future_date.timestamp())
 
         query_body = f'where first_release_date >= {current_timestamp} & first_release_date <= {future_timestamp}; sort first_release_date asc; limit {limit}'
-        fields = 'name,first_release_date,genres.name,language_supports.language.name,platforms.name,screenshots.url,storyline,summary,aggregated_rating,videos.video_id,cover.url,involved_companies.company.name'
+        fields = 'name,first_release_date,genres.name,language_supports.language.name,platforms.name,screenshots.image_id,storyline,summary,aggregated_rating,videos.video_id,cover.image_id,involved_companies.company.name'
 
         return self.fetch_games_data(fields=fields, query_body=query_body)
 
@@ -196,12 +196,10 @@ class GameDataHandler:
 
         result = []
         for screenshot in screenshots:
-            url = screenshot.get('url', '')
-            if url:
-                # Ensure URL has https: prefix
-                formatted_url = f'https:{url}' if not url.startswith(
-                    'http') else url
-                result.append(formatted_url)
+            image_id = screenshot.get('image_id', '')
+            if image_id:
+                result.append(
+                    f'https://images.igdb.com/igdb/image/upload/t_720p/{image_id}.jpg')
 
         return result if result else None
 
@@ -267,7 +265,7 @@ class GameDataHandler:
             storyline = game.get('storyline')
 
             # Cover image processing
-            cover_url = f'https:{game.get('cover', {}).get('url')}'
+            cover_url = f'https://images.igdb.com/igdb/image/upload/t_cover_big/{game.get('cover', {}).get('image_id')}.jpg'
 
             # Release date processing
             release_date = None
