@@ -136,3 +136,93 @@ class GameSchema(BaseModel):
     rating: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class GamePlatformSchema(BaseModel):
+    game_id: int
+    platform_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GamePlatformResponseSchema(BaseModel):
+    game_id: int
+    game_name: str = Field(..., min_length=3, max_length=255)
+    platform: List[PlatformResponseSchema] | None = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GameDeveloperSchema(BaseModel):
+    game_id: int
+    developer_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GameDeveloperResponseSchema(BaseModel):
+    game_id: int
+    game_name: str = Field(..., min_length=3, max_length=255)
+    developers: List[DeveloperResponseSchema] | None = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GameGenreSchema(BaseModel):
+    game_id: int
+    genre_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GameGenreResponseSchema(BaseModel):
+    game_id: int
+    game_name: str = Field(..., min_length=3, max_length=255)
+    genres: List[GenreResponseSchema] | None = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GameLanguageSchema(BaseModel):
+    game_id: int
+    language_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GameLanguageResponseSchema(BaseModel):
+    game_id: int
+    game_name: str = Field(..., min_length=3, max_length=255)
+    languages: List[LanguageResponseSchema] | None = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GameScreenshotSchema(BaseModel):
+    game_id: int
+    screenshot_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GameScreenshotResponseSchema(BaseModel):
+    game_id: int
+    game_name: str = Field(..., min_length=3, max_length=255)
+    screenshots: List[ScreenshotResponseSchema] | None = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GameVideoSchema(BaseModel):
+    game_id: int
+    screenshot_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GameVideoResponseSchema(BaseModel):
+    game_id: int
+    game_name: str = Field(..., min_length=3, max_length=255)
+    videos: List[VideoResponseSchema] | None = []
+
+    model_config = ConfigDict(from_attributes=True)
