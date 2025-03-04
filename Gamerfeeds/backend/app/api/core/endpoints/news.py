@@ -79,7 +79,6 @@ def add_author(author: AuthorSchema, db: Session = Depends(get_db)):
     new_author = Author(**author.model_dump())
     db.add(new_author)
     db.commit()
-    db.refresh(new_author)
 
     return new_author
 
@@ -113,6 +112,5 @@ def add_source_name(source_name: SourceNameSchema, db: Session = Depends(get_db)
     new_source_name = SourceName(**source_name.model_dump())
     db.add(new_source_name)
     db.commit()
-    db.refresh(new_source_name)
 
     return new_source_name

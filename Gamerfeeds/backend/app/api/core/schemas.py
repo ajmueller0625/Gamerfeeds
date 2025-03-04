@@ -148,7 +148,7 @@ class GamePlatformSchema(BaseModel):
 class GamePlatformResponseSchema(BaseModel):
     game_id: int
     game_name: str = Field(..., min_length=3, max_length=255)
-    platform: List[PlatformResponseSchema] | None = []
+    platforms: List[PlatformSchema] | None = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -163,7 +163,7 @@ class GameDeveloperSchema(BaseModel):
 class GameDeveloperResponseSchema(BaseModel):
     game_id: int
     game_name: str = Field(..., min_length=3, max_length=255)
-    developers: List[DeveloperResponseSchema] | None = []
+    developers: List[DeveloperSchema] | None = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -178,7 +178,7 @@ class GameGenreSchema(BaseModel):
 class GameGenreResponseSchema(BaseModel):
     game_id: int
     game_name: str = Field(..., min_length=3, max_length=255)
-    genres: List[GenreResponseSchema] | None = []
+    genres: List[GenreSchema] | None = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -193,7 +193,7 @@ class GameLanguageSchema(BaseModel):
 class GameLanguageResponseSchema(BaseModel):
     game_id: int
     game_name: str = Field(..., min_length=3, max_length=255)
-    languages: List[LanguageResponseSchema] | None = []
+    languages: List[LanguageSchema] | None = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -208,7 +208,7 @@ class GameScreenshotSchema(BaseModel):
 class GameScreenshotResponseSchema(BaseModel):
     game_id: int
     game_name: str = Field(..., min_length=3, max_length=255)
-    screenshots: List[ScreenshotResponseSchema] | None = []
+    screenshots: List[ScreenshotSchema] | None = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -223,6 +223,6 @@ class GameVideoSchema(BaseModel):
 class GameVideoResponseSchema(BaseModel):
     game_id: int
     game_name: str = Field(..., min_length=3, max_length=255)
-    videos: List[VideoResponseSchema] | None = []
+    videos: List[VideoSchema] | None = []
 
     model_config = ConfigDict(from_attributes=True)
