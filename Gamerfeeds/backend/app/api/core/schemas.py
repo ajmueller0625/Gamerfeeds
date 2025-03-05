@@ -127,12 +127,12 @@ class GameSchema(BaseModel):
     cover_image_url: str = Field(..., min_length=10, max_length=255)
     release_date: datetime
     data_type: str
-    developers: List[DeveloperSchema] | None = []
-    platforms: List[PlatformSchema] | None = []
-    languages: List[LanguageSchema] | None = []
-    genres: List[GenreSchema] | None = []
-    screenshots: List[ScreenshotSchema] | None = []
-    videos: List[VideoSchema] | None = []
+    developers: List[str] | None = []
+    platforms: List[str] | None = []
+    languages: List[str] | None = []
+    genres: List[str] | None = []
+    screenshots: List[str] | None = []
+    videos: List[str] | None = []
     rating: int | None = None
 
     model_config = ConfigDict(from_attributes=True)

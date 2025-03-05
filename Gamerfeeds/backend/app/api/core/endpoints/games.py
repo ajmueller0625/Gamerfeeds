@@ -22,12 +22,15 @@ from app.api.core.schemas import (
     VideoSchema, VideoResponseSchema, GameVideoSchema, GameVideoResponseSchema
 )
 
-router = APIRouter(tags='game')
+router = APIRouter(tags=['games'])
 
 
 @router.get('/games', status_code=status.HTTP_200_OK)
 def get_all_games(db: Session = Depends(get_db)):
     all_games = db.scalars(select(Game)).all()
+    if not all_games:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
     return all_games
 
 
@@ -49,77 +52,109 @@ def add_game(game: GameSchema, db: Session = Depends(get_db)):
         data_type_id = new_data_type.id
 
     new_game = Game(**game.model_dump(exclude={'data_type', 'developers',
-                                               'platforms', 'languages', 'genres', 'screenshots', 'videos'}, data_type_id=data_type_id))
+                                               'platforms', 'languages', 'genres', 'screenshots', 'videos'}), data_type_id=data_type_id)
     db.add(new_game)
+    db.flush()  # Flush to get the ID without committing
 
     if game.developers:
         for developer in game.developers:
-            developer_id = None
-            try:
-                developer_id = add_developer(developer=developer).id
-            except HTTPException:
-                developer_id = db.scalars(select(Developer.id).where(
-                    Developer.name == developer)).first()
+            # Check if developer exists
+            exist_developer = db.scalars(select(Developer).where(
+                Developer.name == developer)).one_or_none()
+            if exist_developer:
+                developer_id = exist_developer.id
+            else:
+                # Create new developer
+                new_developer = Developer(name=developer)
+                db.add(new_developer)
+                db.flush()  # Flush to get the ID without committing
+                developer_id = new_developer.id
             new_game_developer = GameDeveloper(
                 game_id=new_game.id, developer_id=developer_id)
             db.add(new_game_developer)
 
     if game.platforms:
         for platform in game.platforms:
-            platform_id = None
-            try:
-                platform_id = add_platform(platform=platform).id
-            except HTTPException:
-                platform_id = db.scalars(select(Platform.id).where(
-                    Platform.name == platform)).first()
+            # Check if platform exists
+            exist_platform = db.scalars(select(Platform).where(
+                Platform.name == platform)).one_or_none()
+            if exist_platform:
+                platform_id = exist_platform.id
+            else:
+                # Create new platform
+                new_platform = Platform(name=platform)
+                db.add(new_platform)
+                db.flush()  # Flush to get the ID without committing
+                platform_id = new_platform.id
             new_game_platform = GamePlatform(
                 game_id=new_game.id, platform_id=platform_id)
-            db.add(new_game_developer)
+            db.add(new_game_platform)
 
     if game.languages:
         for language in game.languages:
-            language_id = None
-            try:
-                language_id = add_language(language=language).id
-            except HTTPException:
-                language_id = db.scalars(select(Language.id).where(
-                    Language.name == language)).first()
+            # Check if language exist
+            exist_language = db.scalars(select(Language).where(
+                Language.name == language)).one_or_none()
+            if exist_language:
+                language_id = exist_language.id
+            else:
+                # Create new language
+                new_language = Language(name=language)
+                db.add(new_language)
+                db.flush()  # Flush to get the ID without committing
+                language_id = new_language.id
             new_game_language = GameLanguage(
                 game_id=new_game.id, language_id=language_id)
             db.add(new_game_language)
 
     if game.genres:
         for genre in game.genres:
-            genre_id = None
-            try:
-                genre_id = add_genre(genre=genre).id
-            except HTTPException:
-                genre_id = db.scalars(select(Genre.id).where(
-                    Genre.name == genre)).first()
+            # Check if genre exist
+            exist_genre = db.scalars(select(Genre).where(
+                Genre.name == genre)).one_or_none()
+            if exist_genre:
+                genre_id = exist_genre.id
+            else:
+                # Create new genre
+                new_genre = Genre(name=genre)
+                db.add(new_genre)
+                db.flush()  # Flush to get the ID without committing
+                genre_id = new_genre.id
             new_game_genre = GameGenre(
                 game_id=new_game.id, genre_id=genre_id)
             db.add(new_game_genre)
 
     if game.screenshots:
         for screenshot in game.screenshots:
-            screenshot_id = None
-            try:
-                screenshot_id = add_screenshot(screenshot=screenshot).id
-            except HTTPException:
-                screenshot_id = db.scalars(select(Screenshot.id).where(
-                    Screenshot.screenshot_url == screenshot)).first()
+            # Check if screenshot exist
+            exist_screenshot = db.scalars(select(Screenshot).where(
+                Screenshot.screenshot_url == screenshot)).one_or_none()
+
+            if exist_screenshot:
+                screenshot_id = exist_screenshot.id
+            else:
+                # Create new screenshot
+                new_screenshot = Screenshot(screenshot_url=screenshot)
+                db.add(new_screenshot)
+                db.flush()  # Flush to get the ID without committing
+                screenshot_id = new_screenshot.id
             new_game_screenshot = GameScreenshot(
                 game_id=new_game.id, screenshot_id=screenshot_id)
             db.add(new_game_screenshot)
 
     if game.videos:
         for video in game.videos:
-            video_id = None
-            try:
-                video_id = add_video(video=video).id
-            except HTTPException:
-                video_id = db.scalars(select(Video.id).where(
-                    Video.video_url == video)).first()
+            # Check if video url exist
+            exist_video = db.scalars(select(Video).where(
+                Video.video_url == video)).one_or_none()
+            if exist_video:
+                video_id = exist_video.id
+            else:
+                # Create new video
+                new_video = Video(video_url=video)
+                db.add(new_video)
+                db.flush()  # Flush to get the ID without committing
+                video_id = new_video.id
             new_game_video = GameVideo(
                 game_id=new_game.id, video_id=video_id)
             db.add(new_game_video)
@@ -132,12 +167,12 @@ def add_game(game: GameSchema, db: Session = Depends(get_db)):
 @router.post('/games/developers', status_code=status.HTTP_201_CREATED, response_model=DeveloperResponseSchema)
 def add_developer(developer: DeveloperSchema, db: Session = Depends(get_db)):
     exist_developer = db.scalars(select(Developer).where(
-        Developer.name == developer)).one_or_none()
+        Developer.name == developer.name)).one_or_none()
 
     if exist_developer:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                             detail='Developer already exist')
-    new_developer = Developer(name=developer)
+    new_developer = Developer(**developer.model_dump())
     db.add(new_developer)
     db.commit()
 
@@ -147,12 +182,12 @@ def add_developer(developer: DeveloperSchema, db: Session = Depends(get_db)):
 @router.post('/games/platforms', status_code=status.HTTP_201_CREATED, response_model=PlatformResponseSchema)
 def add_platform(platform: PlatformSchema, db: Session = Depends(get_db)):
     exist_platform = db.scalars(select(Platform).where(
-        Platform.name == platform)).one_or_none()
+        Platform.name == platform.name)).one_or_none()
 
     if exist_platform:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                             detail='Platform already exist')
-    new_platform = Developer(name=platform)
+    new_platform = Developer(**platform.model_dump())
     db.add(new_platform)
     db.commit()
 
@@ -162,12 +197,12 @@ def add_platform(platform: PlatformSchema, db: Session = Depends(get_db)):
 @router.post('/games/languages', status_code=status.HTTP_201_CREATED, response_model=LanguageResponseSchema)
 def add_language(language: LanguageSchema, db: Session = Depends(get_db)):
     exist_language = db.scalars(select(Language).where(
-        Language.name == language)).one_or_none()
+        Language.name == language.name)).one_or_none()
 
     if exist_language:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                             detail='Language already exist')
-    new_language = Language(name=language)
+    new_language = Language(**language.model_dump())
     db.add(new_language)
     db.commit()
 
@@ -177,12 +212,12 @@ def add_language(language: LanguageSchema, db: Session = Depends(get_db)):
 @router.post('/games/genres', status_code=status.HTTP_201_CREATED, response_model=GenreResponseSchema)
 def add_genre(genre: GenreSchema, db: Session = Depends(get_db)):
     exist_genre = db.scalars(select(Genre).where(
-        Genre.name == genre)).one_or_none()
+        Genre.name == genre.name)).one_or_none()
 
     if exist_genre:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                             detail='Genre already exist')
-    new_genre = Genre(name=genre)
+    new_genre = Genre(**genre.model_dump())
     db.add(new_genre)
     db.commit()
 
@@ -192,12 +227,12 @@ def add_genre(genre: GenreSchema, db: Session = Depends(get_db)):
 @router.post('/games/screenshots', status_code=status.HTTP_201_CREATED, response_model=ScreenshotResponseSchema)
 def add_screenshot(screenshot: ScreenshotSchema, db: Session = Depends(get_db)):
     exist_screenshot = db.scalars(select(Screenshot).where(
-        Screenshot.screenshot_url == screenshot)).one_or_none()
+        Screenshot.screenshot_url == screenshot.screenshot_url)).one_or_none()
 
     if exist_screenshot:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                             detail='Screenshot already exist')
-    new_screenshot = Screenshot(screenshot_url=screenshot)
+    new_screenshot = Screenshot(**screenshot.model_dump())
     db.add(new_screenshot)
     db.commit()
 
@@ -207,12 +242,12 @@ def add_screenshot(screenshot: ScreenshotSchema, db: Session = Depends(get_db)):
 @router.post('/games/videos', status_code=status.HTTP_201_CREATED, response_model=VideoResponseSchema)
 def add_video(video: VideoSchema, db: Session = Depends(get_db)):
     exist_video = db.scalars(select(Video).where(
-        Video.video_url == video)).one_or_none()
+        Video.video_url == video.video_url)).one_or_none()
 
     if exist_video:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                             detail='Video already exist')
-    new_video = Screenshot(video_url=video)
+    new_video = Screenshot(**video.model_dump())
     db.add(new_video)
     db.commit()
 

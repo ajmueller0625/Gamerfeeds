@@ -72,7 +72,7 @@ class Game(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(
         String(100), nullable=False, unique=True)
-    summary: Mapped[str] = mapped_column(String(255), nullable=True)
+    summary: Mapped[str] = mapped_column(Text, nullable=True)
     storyline: Mapped[str] = mapped_column(Text, nullable=True)
     cover_image_url: Mapped[str] = mapped_column(
         String(255), nullable=False)
@@ -156,7 +156,7 @@ class GameDeveloper(Base):
 
     # Relationships
     game: Mapped['Game'] = relationship(back_populates='game_developer')
-    developer: Mapped['Platform'] = relationship(
+    developer: Mapped['Developer'] = relationship(
         back_populates='game_developer')
 
 

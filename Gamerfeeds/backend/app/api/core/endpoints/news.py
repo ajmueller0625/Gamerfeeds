@@ -31,17 +31,25 @@ def add_news(news: NewsSchema, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                             detail='The news already exist in the database')
 
-    try:
-        add_author(news.author)
-    except HTTPException:
-        author_id = db.scalars(select(Author.id).where(
-            Author.name == news.author)).first()
+    exist_author = db.scalars(select(Author).where(
+        Author.name == news.author)).one_or_none()
+    if exist_author:
+        author_id = exist_author.id
+    else:
+        new_author = Author(name=news.author)
+        db.add(new_author)
+        db.flush()  # Flush to get the ID without committing
+        author_id = new_author.id
 
-    try:
-        add_source_name(news.source_name)
-    except HTTPException:
-        source_id = db.scalars(select(SourceName.id).where(
-            SourceName.name == news.source_name)).first()
+    exist_source_name = db.scalars(select(SourceName).where(
+        SourceName.name == news.source_name)).one_or_none()
+    if exist_source_name:
+        source_id = exist_source_name.id
+    else:
+        new_source_name = SourceName(name=news.source_name)
+        db.add(new_source_name)
+        db.flush()  # Flush to get the ID without committing
+        source_id = new_source_name.id
 
     new_news = News(
         **news.model_dump(exclude={'author', 'source_name'}), author_id=author_id, source_id=source_id)

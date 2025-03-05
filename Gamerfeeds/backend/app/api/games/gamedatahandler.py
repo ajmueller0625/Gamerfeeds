@@ -82,7 +82,7 @@ class GameDataHandler:
         except Exception as e:
             raise RequestException(f'Query failed: {str(e)}')
 
-    def fetch_games_data(self, fields: str, query_body: str) -> List[Dict[str, Any]]:
+    def fetch_games_data(self, fields: str, query_body: str, data_type: str) -> List[Dict[str, Any]]:
         '''
         Make a query to the IGDB Games API endpoint.
 
@@ -98,7 +98,7 @@ class GameDataHandler:
         '''
         query = f'fields {fields}; {query_body};'
         data = self._make_api_request(query)
-        return self._clean_data(data)
+        return self._clean_data(data, data_type)
 
     def get_top_games(self, limit: int) -> List[Dict[str, Any]]:
         """
@@ -113,7 +113,7 @@ class GameDataHandler:
         query_body = f'where aggregated_rating != null; sort aggregated_rating desc; limit {limit}'
         fields = 'name,first_release_date,genres.name,language_supports.language.name,platforms.name,screenshots.image_id,storyline,summary,aggregated_rating,videos.video_id,cover.image_id,involved_companies.company.name'
 
-        return self.fetch_games_data(fields=fields, query_body=query_body)
+        return self.fetch_games_data(fields=fields, query_body=query_body, data_type='top')
 
     def get_latest_games(self, limit: int, days_back: int) -> List[Dict[str, Any]]:
         """
@@ -134,7 +134,7 @@ class GameDataHandler:
         query_body = f'where first_release_date >= {unix_timestamp} & first_release_date <= {int(current_time.timestamp())}; sort first_release_date desc; limit {limit}'
         fields = 'name,first_release_date,genres.name,language_supports.language.name,platforms.name,screenshots.image_id,storyline,summary,aggregated_rating,videos.video_id,cover.image_id,involved_companies.company.name'
 
-        return self.fetch_games_data(fields=fields, query_body=query_body)
+        return self.fetch_games_data(fields=fields, query_body=query_body, data_type='latest')
 
     def get_upcoming_games(self, limit: int, days_ahead: int) -> List[Dict[str, Any]]:
         """
@@ -156,7 +156,7 @@ class GameDataHandler:
         query_body = f'where first_release_date >= {current_timestamp} & first_release_date <= {future_timestamp}; sort first_release_date asc; limit {limit}'
         fields = 'name,first_release_date,genres.name,language_supports.language.name,platforms.name,screenshots.image_id,storyline,summary,aggregated_rating,videos.video_id,cover.image_id,involved_companies.company.name'
 
-        return self.fetch_games_data(fields=fields, query_body=query_body)
+        return self.fetch_games_data(fields=fields, query_body=query_body, data_type='upcoming')
 
     def _extract_nested_value(self, data: List[Dict[str, Any]], field: str) -> List[str]:
         """
@@ -246,7 +246,7 @@ class GameDataHandler:
 
         return result if result else None
 
-    def _clean_data(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _clean_data(self, data: List[Dict[str, Any]], data_type: str) -> List[Dict[str, Any]]:
         """
         Clean and format the raw game data from the API.
 
@@ -300,6 +300,7 @@ class GameDataHandler:
                 'storyline': storyline,
                 'cover_image_url': cover_url,
                 'release_date': release_date,
+                'data_type': data_type,
                 'developers': developers,
                 'platforms': platforms,
                 'languages': languages,
