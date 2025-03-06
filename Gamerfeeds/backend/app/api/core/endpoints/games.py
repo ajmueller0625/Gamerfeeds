@@ -27,7 +27,7 @@ router = APIRouter(tags=['games'])
 
 @router.get('/games', status_code=status.HTTP_200_OK)
 def get_all_games(db: Session = Depends(get_db)):
-    all_games = db.scalars(select(Game)).all()
+    all_games = get_games_by_data_type(db=db, data_type=None)
     if not all_games:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
@@ -49,6 +49,7 @@ def add_game(game: GameSchema, db: Session = Depends(get_db)):
     if not data_type_id:
         new_data_type = GameDataType(name=game.data_type)
         db.add(new_data_type)
+        db.flush()  # Flush to get the ID without committing
         data_type_id = new_data_type.id
 
     new_game = Game(**game.model_dump(exclude={'data_type', 'developers',
@@ -162,6 +163,103 @@ def add_game(game: GameSchema, db: Session = Depends(get_db)):
     db.commit()
 
     return new_game
+
+
+@router.get('/games/topgames/', status_code=status.HTTP_200_OK)
+def get_top_games(db: Session = Depends(get_db)):
+    top_games_result = get_games_by_data_type(db=db, data_type='top')
+
+    if not top_games_result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
+
+    return top_games_result
+
+
+@router.get('/games/latestgames', status_code=status.HTTP_200_OK)
+def get_latest_games(db: Session = Depends(get_db)):
+    latest_games_result = get_games_by_data_type(db=db, data_type='latest')
+
+    if not latest_games_result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
+
+    return latest_games_result
+
+
+@router.get('/games/upcominggames', status_code=status.HTTP_200_OK)
+def get_upcoming_games(db: Session = Depends(get_db)):
+    upcoming_games_result = get_games_by_data_type(db=db, data_type='upcoming')
+
+    if not upcoming_games_result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
+
+    return upcoming_games_result
+
+
+# Helper function to get game data to avoid code repitition
+def get_games_by_data_type(db: Session, data_type: str = None):
+    if data_type:
+        # Query for Games with data type name instead of data type id
+        games_query = select(Game.id, Game.name, Game.summary, Game.storyline, Game.cover_image_url, Game.release_date, Game.rating).join(
+            GameDataType, GameDataType.id == Game.data_type_id).where(GameDataType.name == data_type)
+    else:
+        games_query = select(Game.id, Game.name, Game.summary, Game.storyline, Game.cover_image_url, Game.release_date,
+                             GameDataType.name.label('data_type'), Game.rating).join(GameDataType, GameDataType.id == Game.data_type_id)
+
+    games_result = db.execute(games_query).mappings().all()
+
+    result = []
+    for game in games_result:
+        game_dict = dict(game)
+
+        # Query to get developers for this game
+        developers_query = select(Developer.name).join(
+            GameDeveloper, GameDeveloper.developer_id == Developer.id).where(GameDeveloper.game_id == game['id'])
+        developers = [row[0] for row in db.execute(developers_query).all()]
+
+        # Query to get platforms for this game
+        platforms_query = select(Platform.name).join(
+            GamePlatform, GamePlatform.platform_id == Platform.id).where(GamePlatform.game_id == game['id'])
+        platforms = [row[0] for row in db.execute(platforms_query).all()]
+
+        # Query to get languages for this game
+        languages_query = select(Language.name).join(
+            GameLanguage, GameLanguage.language_id == Language.id).where(GameLanguage.game_id == game['id'])
+        languages = [row[0] for row in db.execute(languages_query).all()]
+
+        # Query to get genres for this game
+        genres_query = select(Genre.name).join(
+            GameGenre, GameGenre.genre_id == Genre.id).where(GameGenre.game_id == game['id'])
+        genres = [row[0] for row in db.execute(genres_query).all()]
+
+        # Query to get screenshots for this game
+        screenshots_query = select(Screenshot.screenshot_url).join(
+            GameScreenshot, GameScreenshot.screenshot_id == Screenshot.id).where(GameScreenshot.game_id == game['id'])
+        screenshots = [row[0] for row in db.execute(screenshots_query).all()]
+
+        # Query to get videos for this game
+        videos_query = select(Video.video_url).join(
+            GameVideo, GameVideo.video_id == Video.id).where(GameVideo.game_id == game['id'])
+        videos = [row[0] for row in db.execute(videos_query).all()]
+
+        # Add developers to the game dict
+        game_dict['developers'] = developers
+        # Add platforms to the game dict
+        game_dict['platforms'] = platforms
+        # Add languages to the game dict
+        game_dict['languages'] = languages
+        # Add genres to the game dict
+        game_dict['genres'] = genres
+        # Add screenshots to the game dict
+        game_dict['screenshots'] = screenshots
+        # Add videos to the game dict
+        game_dict['videos'] = videos
+
+        result.append(game_dict)
+
+    return result
 
 
 @router.post('/games/developers', status_code=status.HTTP_201_CREATED, response_model=DeveloperResponseSchema)
