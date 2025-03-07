@@ -1,6 +1,6 @@
 from fastapi import Depends, APIRouter, HTTPException, status
 from sqlalchemy import select, delete, update
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload, subqueryload
 from app.api.db_setup import get_db
 
 from app.api.core.models import (
@@ -19,7 +19,7 @@ from app.api.core.schemas import (
     LanguageSchema, LanguageResponseSchema, GameLanguageSchema, GameLanguageResponseSchema,
     GenreSchema, GenreResponseSchema, GameGenreSchema, GameGenreResponseSchema,
     ScreenshotSchema, ScreenshotResponseSchema, GameScreenshotSchema, GameScreenshotResponseSchema,
-    VideoSchema, VideoResponseSchema, GameVideoSchema, GameVideoResponseSchema
+    VideoSchema, VideoResponseSchema, GameVideoSchema, GameVideoResponseSchema, GameResponseSchema
 )
 
 router = APIRouter(tags=['games'])
@@ -27,10 +27,41 @@ router = APIRouter(tags=['games'])
 
 @router.get('/games', status_code=status.HTTP_200_OK)
 def get_all_games(db: Session = Depends(get_db)):
-    all_games = get_games_by_data_type(db=db, data_type=None)
-    if not all_games:
+    query = (select(Game)
+             .join(GameDataType, GameDataType.id == Game.data_type_id)
+             .options(selectinload(Game.platforms))
+             .options(selectinload(Game.developers))
+             .options(selectinload(Game.genres))
+             .options(selectinload(Game.languages))
+             .options(selectinload(Game.screenshots))
+             .options(selectinload(Game.videos)))
+
+    games = db.scalars(query).all()
+
+    if not games:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
+
+    all_games = []
+    for game in games:
+        game_dict = {
+            'id': game.id,
+            'name': game.name,
+            'summary': game.summary,
+            'storyline': game.storyline,
+            'cover_image_url': game.cover_image_url,
+            'release_date': game.release_date,
+            'data_type': game.data_type.name,
+            'developers': [developer.name for developer in game.developers],
+            'platforms': [platform.name for platform in game.platforms],
+            'genres': [genre.name for genre in game.genres],
+            'languages': [language.name for language in game.languages],
+            'screenshots': [screenshot.screenshot_url for screenshot in game.screenshots],
+            'videos': [video.video_url for video in game.videos],
+            'rating': game.rating
+        }
+        all_games.append(game_dict)
+
     return all_games
 
 
@@ -60,104 +91,84 @@ def add_game(game: GameSchema, db: Session = Depends(get_db)):
     if game.developers:
         for developer in game.developers:
             # Check if developer exists
-            exist_developer = db.scalars(select(Developer).where(
+            new_developer = db.scalars(select(Developer).where(
                 Developer.name == developer)).one_or_none()
-            if exist_developer:
-                developer_id = exist_developer.id
-            else:
-                # Create new developer
+            if not new_developer:
                 new_developer = Developer(name=developer)
                 db.add(new_developer)
                 db.flush()  # Flush to get the ID without committing
-                developer_id = new_developer.id
             new_game_developer = GameDeveloper(
-                game_id=new_game.id, developer_id=developer_id)
+                game_id=new_game.id, developer_id=new_developer.id)
             db.add(new_game_developer)
 
     if game.platforms:
         for platform in game.platforms:
             # Check if platform exists
-            exist_platform = db.scalars(select(Platform).where(
+            new_platform = db.scalars(select(Platform).where(
                 Platform.name == platform)).one_or_none()
-            if exist_platform:
-                platform_id = exist_platform.id
-            else:
+            if not new_platform:
                 # Create new platform
                 new_platform = Platform(name=platform)
                 db.add(new_platform)
                 db.flush()  # Flush to get the ID without committing
-                platform_id = new_platform.id
             new_game_platform = GamePlatform(
-                game_id=new_game.id, platform_id=platform_id)
+                platform_id=new_platform.id, game_id=new_game.id)
             db.add(new_game_platform)
 
     if game.languages:
         for language in game.languages:
             # Check if language exist
-            exist_language = db.scalars(select(Language).where(
+            new_language = db.scalars(select(Language).where(
                 Language.name == language)).one_or_none()
-            if exist_language:
-                language_id = exist_language.id
-            else:
+            if not new_language:
                 # Create new language
                 new_language = Language(name=language)
                 db.add(new_language)
                 db.flush()  # Flush to get the ID without committing
-                language_id = new_language.id
             new_game_language = GameLanguage(
-                game_id=new_game.id, language_id=language_id)
+                language_id=new_language.id, game_id=new_game.id)
             db.add(new_game_language)
 
     if game.genres:
         for genre in game.genres:
             # Check if genre exist
-            exist_genre = db.scalars(select(Genre).where(
+            new_genre = db.scalars(select(Genre).where(
                 Genre.name == genre)).one_or_none()
-            if exist_genre:
-                genre_id = exist_genre.id
-            else:
+            if not new_genre:
                 # Create new genre
                 new_genre = Genre(name=genre)
                 db.add(new_genre)
                 db.flush()  # Flush to get the ID without committing
-                genre_id = new_genre.id
             new_game_genre = GameGenre(
-                game_id=new_game.id, genre_id=genre_id)
+                genre_id=new_genre.id, game_id=new_game.id)
             db.add(new_game_genre)
 
     if game.screenshots:
         for screenshot in game.screenshots:
             # Check if screenshot exist
-            exist_screenshot = db.scalars(select(Screenshot).where(
+            new_screenshot = db.scalars(select(Screenshot).where(
                 Screenshot.screenshot_url == screenshot)).one_or_none()
-
-            if exist_screenshot:
-                screenshot_id = exist_screenshot.id
-            else:
+            if not new_screenshot:
                 # Create new screenshot
                 new_screenshot = Screenshot(screenshot_url=screenshot)
                 db.add(new_screenshot)
                 db.flush()  # Flush to get the ID without committing
-                screenshot_id = new_screenshot.id
             new_game_screenshot = GameScreenshot(
-                game_id=new_game.id, screenshot_id=screenshot_id)
+                screenshot_id=new_screenshot.id, game_id=new_game.id)
             db.add(new_game_screenshot)
 
     if game.videos:
         for video in game.videos:
             # Check if video url exist
-            exist_video = db.scalars(select(Video).where(
+            new_video = db.scalars(select(Video).where(
                 Video.video_url == video)).one_or_none()
-            if exist_video:
-                video_id = exist_video.id
-            else:
+            if not new_video:
                 # Create new video
                 new_video = Video(video_url=video)
                 db.add(new_video)
                 db.flush()  # Flush to get the ID without committing
-                video_id = new_video.id
             new_game_video = GameVideo(
-                game_id=new_game.id, video_id=video_id)
+                video_id=new_video.id, game_id=new_game.id)
             db.add(new_game_video)
 
     db.commit()
@@ -167,96 +178,69 @@ def add_game(game: GameSchema, db: Session = Depends(get_db)):
 
 @router.get('/games/topgames/', status_code=status.HTTP_200_OK)
 def get_top_games(db: Session = Depends(get_db)):
-    top_games_result = get_games_by_data_type(db=db, data_type='top')
+    top_games = get_games_by_data_type(db=db, data_type='top')
 
-    if not top_games_result:
+    if not top_games:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
 
-    return top_games_result
+    return top_games
 
 
 @router.get('/games/latestgames', status_code=status.HTTP_200_OK)
 def get_latest_games(db: Session = Depends(get_db)):
-    latest_games_result = get_games_by_data_type(db=db, data_type='latest')
+    latest_games = get_games_by_data_type(db=db, data_type='latest')
 
-    if not latest_games_result:
+    if not latest_games:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
 
-    return latest_games_result
+    return latest_games
 
 
 @router.get('/games/upcominggames', status_code=status.HTTP_200_OK)
 def get_upcoming_games(db: Session = Depends(get_db)):
-    upcoming_games_result = get_games_by_data_type(db=db, data_type='upcoming')
+    upcoming_games = get_games_by_data_type(db=db, data_type='upcoming')
 
-    if not upcoming_games_result:
+    if not upcoming_games:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
 
-    return upcoming_games_result
+    return upcoming_games
 
 
 # Helper function to get game data to avoid code repitition
-def get_games_by_data_type(db: Session, data_type: str = None):
-    if data_type:
-        # Query for Games with data type name instead of data type id
-        games_query = select(Game.id, Game.name, Game.summary, Game.storyline, Game.cover_image_url, Game.release_date, Game.rating).join(
-            GameDataType, GameDataType.id == Game.data_type_id).where(GameDataType.name == data_type)
-    else:
-        games_query = select(Game.id, Game.name, Game.summary, Game.storyline, Game.cover_image_url, Game.release_date,
-                             GameDataType.name.label('data_type'), Game.rating).join(GameDataType, GameDataType.id == Game.data_type_id)
+def get_games_by_data_type(db: Session, data_type: str):
+    query = (select(Game)
+             .join(GameDataType, GameDataType.id == Game.data_type_id)
+             .options(selectinload(Game.platforms))
+             .options(selectinload(Game.developers))
+             .options(selectinload(Game.genres))
+             .options(selectinload(Game.languages))
+             .options(selectinload(Game.screenshots))
+             .options(selectinload(Game.videos))
+             .where(GameDataType.name == data_type))
 
-    games_result = db.execute(games_query).mappings().all()
+    games = db.scalars(query).all()
 
     result = []
-    for game in games_result:
-        game_dict = dict(game)
-
-        # Query to get developers for this game
-        developers_query = select(Developer.name).join(
-            GameDeveloper, GameDeveloper.developer_id == Developer.id).where(GameDeveloper.game_id == game['id'])
-        developers = [row[0] for row in db.execute(developers_query).all()]
-
-        # Query to get platforms for this game
-        platforms_query = select(Platform.name).join(
-            GamePlatform, GamePlatform.platform_id == Platform.id).where(GamePlatform.game_id == game['id'])
-        platforms = [row[0] for row in db.execute(platforms_query).all()]
-
-        # Query to get languages for this game
-        languages_query = select(Language.name).join(
-            GameLanguage, GameLanguage.language_id == Language.id).where(GameLanguage.game_id == game['id'])
-        languages = [row[0] for row in db.execute(languages_query).all()]
-
-        # Query to get genres for this game
-        genres_query = select(Genre.name).join(
-            GameGenre, GameGenre.genre_id == Genre.id).where(GameGenre.game_id == game['id'])
-        genres = [row[0] for row in db.execute(genres_query).all()]
-
-        # Query to get screenshots for this game
-        screenshots_query = select(Screenshot.screenshot_url).join(
-            GameScreenshot, GameScreenshot.screenshot_id == Screenshot.id).where(GameScreenshot.game_id == game['id'])
-        screenshots = [row[0] for row in db.execute(screenshots_query).all()]
-
-        # Query to get videos for this game
-        videos_query = select(Video.video_url).join(
-            GameVideo, GameVideo.video_id == Video.id).where(GameVideo.game_id == game['id'])
-        videos = [row[0] for row in db.execute(videos_query).all()]
-
-        # Add developers to the game dict
-        game_dict['developers'] = developers
-        # Add platforms to the game dict
-        game_dict['platforms'] = platforms
-        # Add languages to the game dict
-        game_dict['languages'] = languages
-        # Add genres to the game dict
-        game_dict['genres'] = genres
-        # Add screenshots to the game dict
-        game_dict['screenshots'] = screenshots
-        # Add videos to the game dict
-        game_dict['videos'] = videos
-
+    for game in games:
+        game_dict = {
+            'id': game.id,
+            'name': game.name,
+            'summary': game.summary,
+            'storyline': game.storyline,
+            'cover_image_url': game.cover_image_url,
+            'release_date': game.release_date,
+            'data_type': game.data_type.name,
+            'developers': [developer.name for developer in game.developers],
+            'platforms': [platform.name for platform in game.platforms],
+            'genres': [genre.name for genre in game.genres],
+            'languages': [language.name for language in game.languages],
+            'screenshots': [screenshot.screenshot_url for screenshot in game.screenshots],
+            'videos': [video.video_url for video in game.videos],
+            'rating': game.rating
+        }
         result.append(game_dict)
 
     return result

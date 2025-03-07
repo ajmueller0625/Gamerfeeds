@@ -138,6 +138,10 @@ class GameSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class GameResponseSchema(GameSchema):
+    id: int
+
+
 class GamePlatformSchema(BaseModel):
     game_id: int
     platform_id: int

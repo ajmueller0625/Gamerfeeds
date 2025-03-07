@@ -84,20 +84,20 @@ class Game(Base):
     data_type: Mapped['GameDataType'] = relationship(
         back_populates='games')
     data_type_id: Mapped[int] = mapped_column(
-        ForeignKey('game_data_types.id', ondelete='SET NULL'), nullable=True)
+        ForeignKey('game_data_types.id', ondelete='SET NULL'), nullable=False)
 
-    game_platform: Mapped[List['GamePlatform']
-                          ] = relationship(back_populates='game')
-    game_developer: Mapped[List['GameDeveloper']
-                           ] = relationship(back_populates='game')
-    game_genre: Mapped[List['GameGenre']] = relationship(
-        back_populates='game')
-    game_language: Mapped[List['GameLanguage']
-                          ] = relationship(back_populates='game')
-    game_screenshot: Mapped[List['GameScreenshot']
-                            ] = relationship(back_populates='game')
-    game_video: Mapped[List['GameVideo']
-                       ] = relationship(back_populates='game')
+    platforms: Mapped[List['Platform']] = relationship(
+        secondary='game_platforms', back_populates='games')
+    developers: Mapped[List['Developer']] = relationship(
+        secondary='game_developers', back_populates='games')
+    genres: Mapped[List['Genre']] = relationship(
+        secondary='game_genres', back_populates='games')
+    languages: Mapped[List['Language']] = relationship(
+        secondary='game_languages', back_populates='games')
+    screenshots: Mapped[List['Screenshot']] = relationship(
+        secondary='game_screenshots', back_populates='games')
+    videos: Mapped[List['Video']] = relationship(
+        secondary='game_videos', back_populates='games')
 
 
 class GameDataType(Base):
@@ -118,8 +118,8 @@ class Platform(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
 
     # Relationships
-    game_platform: Mapped[List['GamePlatform']
-                          ] = relationship(back_populates='platform')
+    games: Mapped[List['Game']] = relationship(
+        secondary='game_platforms', back_populates='platforms')
 
 
 class GamePlatform(Base):
@@ -130,10 +130,6 @@ class GamePlatform(Base):
     platform_id: Mapped[int] = mapped_column(
         ForeignKey('platforms.id', ondelete='CASCADE'), primary_key=True)
 
-    # Relationships
-    game: Mapped['Game'] = relationship(back_populates='game_platform')
-    platform: Mapped['Platform'] = relationship(back_populates='game_platform')
-
 
 class Developer(Base):
     __tablename__ = 'developers'
@@ -142,8 +138,8 @@ class Developer(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
 
     # Relationships
-    game_developer: Mapped[List['GameDeveloper']
-                           ] = relationship(back_populates='developer')
+    games: Mapped[List['Game']] = relationship(
+        secondary='game_developers', back_populates='developers')
 
 
 class GameDeveloper(Base):
@@ -154,11 +150,6 @@ class GameDeveloper(Base):
     developer_id: Mapped[int] = mapped_column(
         ForeignKey('developers.id', ondelete='CASCADE'), primary_key=True)
 
-    # Relationships
-    game: Mapped['Game'] = relationship(back_populates='game_developer')
-    developer: Mapped['Developer'] = relationship(
-        back_populates='game_developer')
-
 
 class Genre(Base):
     __tablename__ = 'genres'
@@ -167,8 +158,8 @@ class Genre(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
 
     # Relationships
-    game_genre: Mapped[List['GameGenre']
-                       ] = relationship(back_populates='genre')
+    games: Mapped[List['Game']] = relationship(
+        secondary='game_genres', back_populates='genres')
 
 
 class GameGenre(Base):
@@ -179,10 +170,6 @@ class GameGenre(Base):
     genre_id: Mapped[int] = mapped_column(
         ForeignKey('genres.id', ondelete='CASCADE'), primary_key=True)
 
-    # Relationships
-    game: Mapped['Game'] = relationship(back_populates='game_genre')
-    genre: Mapped['Genre'] = relationship(back_populates='game_genre')
-
 
 class Language(Base):
     __tablename__ = 'languages'
@@ -191,8 +178,8 @@ class Language(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
 
     # Relationships
-    game_language: Mapped[List['GameLanguage']
-                          ] = relationship(back_populates='language')
+    games: Mapped[List['Game']] = relationship(
+        secondary='game_languages', back_populates='languages')
 
 
 class GameLanguage(Base):
@@ -203,10 +190,6 @@ class GameLanguage(Base):
     language_id: Mapped[int] = mapped_column(
         ForeignKey('languages.id', ondelete='CASCADE'), primary_key=True)
 
-    # Relationships
-    game: Mapped['Game'] = relationship(back_populates='game_language')
-    language: Mapped['Language'] = relationship(back_populates='game_language')
-
 
 class Screenshot(Base):
     __tablename__ = 'screenshots'
@@ -216,8 +199,8 @@ class Screenshot(Base):
         String(255), nullable=False, unique=True)
 
     # Relationships
-    game_screenshot: Mapped[List['GameScreenshot']
-                            ] = relationship(back_populates='screenshot')
+    games: Mapped[List['Game']] = relationship(
+        secondary='game_screenshots', back_populates='screenshots')
 
 
 class GameScreenshot(Base):
@@ -228,11 +211,6 @@ class GameScreenshot(Base):
     screenshot_id: Mapped[int] = mapped_column(
         ForeignKey('screenshots.id', ondelete='CASCADE'), primary_key=True)
 
-    # Relationships
-    game: Mapped['Game'] = relationship(back_populates='game_screenshot')
-    screenshot: Mapped['Screenshot'] = relationship(
-        back_populates='game_screenshot')
-
 
 class Video(Base):
     __tablename__ = 'videos'
@@ -242,8 +220,8 @@ class Video(Base):
         String(255), nullable=False, unique=True)
 
     # Relationships
-    game_video: Mapped[List['GameVideo']
-                       ] = relationship(back_populates='video')
+    games: Mapped[List['Game']] = relationship(
+        secondary='game_videos', back_populates='videos')
 
 
 class GameVideo(Base):
@@ -253,7 +231,3 @@ class GameVideo(Base):
         'games.id', ondelete='CASCADE'), primary_key=True)
     video_id: Mapped[int] = mapped_column(ForeignKey(
         'videos.id', ondelete='CASCADE'), primary_key=True)
-
-    # Relationships
-    game: Mapped['Game'] = relationship(back_populates='game_video')
-    video: Mapped['Video'] = relationship(back_populates='game_video')
