@@ -1,13 +1,15 @@
 from contextlib import contextmanager
 from datetime import datetime
 import logging
+import asyncio
 from logging.handlers import RotatingFileHandler
-from typing import Any, Dict
+from typing import Any, Dict, List
 from app.api.db_setup import get_db
 from sqlalchemy.exc import SQLAlchemyError
 from functools import lru_cache
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+from app.api.games.gamedatahandler import GameDataHandler
 
 from app.api.core.models import (
     Game, GameDataType,
@@ -137,13 +139,14 @@ def get_data_type_id(name: str, db: Session) -> int:
 
 
 @lru_cache(maxsize=100)
-def get_data_from_model(field: str, model_class, db: Session, unique_field: str = "name") -> Dict[str: Any]:
+def get_data_from_model(field: str, model_class: Any, db: Session, unique_field: str = "name") -> Dict[str: Any]:
     """
     Check if the data exist base on field, unique field and class model
     then create a new data if it does not with cache for performance
 
     Args:
         field: The game data
+        model_class: Model class data should have
         db: Database session
         unique field: The unique field of the database model
 
@@ -168,3 +171,144 @@ def get_data_from_model(field: str, model_class, db: Session, unique_field: str 
         logger.error(
             f"Error checking game data existence for Data - {field}: {e}")
         return False  # Assume the data does not exist
+
+
+def get_all_data(field_list: List[str], model_class: Any, db: Session, uniqe_field='name'):
+    """
+    Get all data from database based in model class 
+
+    Args:
+        field: The game data
+        model_class: Model class data should have
+        db: Database session
+        unique field: The unique field of the database model
+
+    Return:
+        List of data from the database
+    """
+    result = []
+    for field in field_list:
+        result.append(get_data_from_model(field, model_class, db, uniqe_field))
+
+    return result
+
+
+def update_exist_game(game: Dict[str: Any], db: Session):
+    """
+    A relay function for updating game in database based on their data type
+
+    Args:
+        game: Dictionary of game data
+        db: Database session
+    """
+    data_type = game.get('data_type', '')
+    if data_type == 'top':
+        update_exist_top_game(game, db)
+    if data_type == 'upcoming':
+        update_exist_upcoming_game(game, db)
+    if data_type == 'latest':
+        update_exist_latest_game(game, db)
+
+
+def update_exist_top_game(game: Dict[str: Any], db: Session):
+    pass
+
+
+def update_exist_upcoming_game(game: Dict[str: Any], db: Session):
+    pass
+
+
+def update_exist_latest_game(game: Dict[str: Any], db: Session):
+    pass
+
+
+async def batch_save_games(games: List[Dict[str: Any]], batch_size: int = 10):
+    """
+    Save games to database in batches with error handling
+
+    Args:
+        games: List of games dictionaries
+        batch_size: Number of articles to save in each batch
+    """
+    total_games = len(games)
+    saved_count = 0
+    skipped_count = 0
+    error_count = 0
+
+    # Process in batches
+    for i in range(0, total_games, batch_size):
+        batch = games[i:i+batch_size]
+
+        with db_session_manager() as db:
+            for game in batch:
+                try:
+                    # Skip if game has no cover url image
+                    if not game.get('cover_image_url'):
+                        skipped_count += 1
+                        continue
+
+                    if check_game_exist(game.get('name'), game.get('release_date'), db):
+                        update_exist_game(game, db)
+                        continue
+
+                    data_type_id = get_data_type_id(game.get('data_type'), db)
+                    developers = get_all_data(field_list=game.get(
+                        'developers', []), model_class=Developer, db=db)
+                    platforms = get_all_data(field_list=game.get(
+                        'platforms', []), model_class=Platform, db=db)
+                    languages = get_all_data(field_list=game.get(
+                        'languages', []), model_class=Language, db=db)
+                    genres = get_all_data(field_list=game.get(
+                        'genres', []), model_class=Genre, db=db)
+                    screenshots = get_all_data(field_list=game.get(
+                        'screenshots', []), model_class=Screenshot, db=db, uniqe_field='screenshot_url')
+                    videos = get_all_data(field_list=game.get(
+                        'videos', []), model_class=Video, db=db, uniqe_field='video_url')
+
+                    new_game = Game(
+                        name=game.get('name'),
+                        summary=game.get('summary'),
+                        storyline=game.get('storyline'),
+                        cover_image_url=game.get('cover_image_url'),
+                        release_date=game.get(
+                            'release_date', datetime.now().isoformat()),
+                        rating=game.get('rating'),
+                        data_type_id=data_type_id,
+                        platforms=platforms,
+                        developers=developers,
+                        genres=genres,
+                        languages=languages,
+                        screenshots=screenshots,
+                        videos=videos
+                    )
+
+                    saved_count += 1
+                    db.add(new_game)
+
+                except Exception as e:
+                    error_count += 1
+                    logger.error(
+                        f'Error saving game {game.get('name', 'Unknown')}: {e}')
+
+    logger.info(
+        f'Database update complete. Saved: {saved_count}, Skipped: {skipped_count}, Error: {error_count}')
+    return saved_count, skipped_count, error_count
+
+
+async def update_top_games(client_id: str, client_secret: str):
+    """
+    Function for updating top games data asynchronously
+
+    Args:
+        client_id: IGDB app client id
+        client_secret: IGDB app client secret id
+    """
+    try:
+        handler = GameDataHandler(
+            client_id=client_id, client_secret=client_secret)
+
+        logger.info(f"Fetching top games data")
+
+    except Exception as e:
+        logger.error(f"Failed to update news data: {e}", exc_info=True)
+        raise

@@ -273,9 +273,6 @@ async def update_news_data(api_key: str, openai_key: str):
 
 
 async def main():
-    """
-    Entry point for the script
-    """
     load_dotenv()
     api_key = getenv('NEWS_API_KEY')
     openai_key = getenv('OPENAI_KEY')
