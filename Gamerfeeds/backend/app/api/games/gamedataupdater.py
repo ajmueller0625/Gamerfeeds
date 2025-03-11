@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import asyncio
 from logging.handlers import RotatingFileHandler
@@ -8,7 +8,7 @@ from app.api.db_setup import get_db
 from sqlalchemy.exc import SQLAlchemyError
 from functools import lru_cache
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from app.api.games.gamedatahandler import GameDataHandler
 
 from app.api.core.models import (
@@ -193,33 +193,42 @@ def get_all_data(field_list: List[str], model_class: Any, db: Session, uniqe_fie
     return result
 
 
-def update_exist_game(game: Dict[str: Any], db: Session):
+def update_exist_top_game(game: Dict[str: Any], db: Session):
     """
-    A relay function for updating game in database based on their data type
+    Update an existing game with data type top
 
     Args:
         game: Dictionary of game data
         db: Database session
     """
-    data_type = game.get('data_type', '')
-    if data_type == 'top':
-        update_exist_top_game(game, db)
-    if data_type == 'upcoming':
-        update_exist_upcoming_game(game, db)
-    if data_type == 'latest':
-        update_exist_latest_game(game, db)
+    exist_game = db.scalars(select(Game).where(
+        Game.name == game.get('name', ''))).first()
+
+    exist_game.summary = game.get('summary', '')
+    exist_game.storyline = game.get('storyline', '')
+    exist_game.cover_image_url = game.get('cover_image_url', '')
+    exist_game.platforms = get_all_data(
+        game.get('platforms', []), Platform, db)
+    exist_game.languages = get_all_data(
+        game.get('languages', []), Language, db)
+    exist_game.screenshots = get_all_data(
+        game.get('screenshots', []), Screenshot, db)
+    exist_game.videos = get_all_data(game.get('videos', []), Video, db)
+    exist_game.rating = game.get('rating')
+
+    db.add(exist_game)
 
 
-def update_exist_top_game(game: Dict[str: Any], db: Session):
-    pass
+def update_exist_upcoming_game(db: Session):
+    query = delete(Game).where(Game.release_date >= datetime.now().date())
+    db.execute(query)
 
 
-def update_exist_upcoming_game(game: Dict[str: Any], db: Session):
-    pass
-
-
-def update_exist_latest_game(game: Dict[str: Any], db: Session):
-    pass
+def update_exist_latest_game(db: Session):
+    six_months = timedelta(days=180)
+    query = delete(Game).where(
+        (Game.release_date - datetime.now()) >= six_months)
+    db.execute(query)
 
 
 async def batch_save_games(games: List[Dict[str: Any]], batch_size: int = 10):
@@ -247,9 +256,14 @@ async def batch_save_games(games: List[Dict[str: Any]], batch_size: int = 10):
                         skipped_count += 1
                         continue
 
-                    if check_game_exist(game.get('name'), game.get('release_date'), db):
-                        update_exist_game(game, db)
-                        continue
+                    if check_game_exist(game.get('name', ''), game.get('release_date', datetime.now().date()), db):
+                        data_type = game.get('data_type', '')
+                        if data_type == 'top':
+                            update_exist_top_game(game, db)
+                            continue
+                        else:
+                            skipped_count += 1
+                            continue
 
                     data_type_id = get_data_type_id(game.get('data_type'), db)
                     developers = get_all_data(field_list=game.get(
@@ -271,7 +285,7 @@ async def batch_save_games(games: List[Dict[str: Any]], batch_size: int = 10):
                         storyline=game.get('storyline'),
                         cover_image_url=game.get('cover_image_url'),
                         release_date=game.get(
-                            'release_date', datetime.now().isoformat()),
+                            'release_date', datetime.now().date()),
                         rating=game.get('rating'),
                         data_type_id=data_type_id,
                         platforms=platforms,
@@ -308,6 +322,14 @@ async def update_top_games(client_id: str, client_secret: str):
             client_id=client_id, client_secret=client_secret)
 
         logger.info(f"Fetching top games data")
+        top_games = handler.get_top_games(limit=500)
+
+        saved, skipped, errors = await batch_save_games(top_games)
+
+        logger.info(
+            f"Top Games update: Processed {len(top_games)}, Saved {saved}, Skipped {skipped}, Errors {errors}")
+        logger.info(
+            f"Successfully updated the database with {len(top_games)} games")
 
     except Exception as e:
         logger.error(f"Failed to update news data: {e}", exc_info=True)

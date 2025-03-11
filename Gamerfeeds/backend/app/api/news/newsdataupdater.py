@@ -215,7 +215,7 @@ async def batch_save_articles(articles: List[Dict[str, Any]], batch_size: int = 
                         source_id=source_id,
                         content=article.get('content', ''),
                         published=article.get(
-                            'publishedAt', datetime.now().isoformat())
+                            'publishedAt', datetime.now().date())
                     )
 
                     db.add(new_article)
