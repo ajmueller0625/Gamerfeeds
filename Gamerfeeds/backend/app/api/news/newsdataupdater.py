@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.db_setup import get_db
-from app.api.core.models import News, Authors, SourceNames
+from app.api.core.models import News, Author, SourceName
 from app.api.news.newsdatahandler import NewsDataHandler
 
 
@@ -102,14 +102,14 @@ def get_author_id(name: str, db: Session) -> int:
 
     try:
         # Check if author exists
-        existing_author = db.scalars(select(Authors.id).where(
-            Authors.name == name)).one_or_none()
+        existing_author = db.scalars(select(Author.id).where(
+            Author.name == name)).one_or_none()
 
         if existing_author:
             return existing_author
 
         # Create new author
-        new_author = Authors(name=name)
+        new_author = Author(name=name)
         db.add(new_author)
         db.flush()  # Flush but don't commit yet
 
@@ -136,14 +136,14 @@ def get_source_id(name: str, db: Session) -> int:
 
     try:
         # Check if source exists
-        existing_source = db.scalars(select(SourceNames.id).where(
-            SourceNames.name == name)).one_or_none()
+        existing_source = db.scalars(select(SourceName.id).where(
+            SourceName.name == name)).one_or_none()
 
         if existing_source:
             return existing_source
 
         # Create new source
-        new_source = SourceNames(name=name)
+        new_source = SourceName(name=name)
         db.add(new_source)
         db.flush()  # Flush but don't commit yet
 
@@ -252,7 +252,6 @@ async def update_news_data(api_key: str, openai_key: str):
             openai_key=openai_key,
             query=query,
             domains=domains,
-            pageSize=50,
             max_workers=5
         )
 

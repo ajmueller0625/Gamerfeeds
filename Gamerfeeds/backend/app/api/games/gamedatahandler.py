@@ -1,7 +1,6 @@
 from os import getenv
 from dotenv import load_dotenv
 import requests
-import json
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
 from requests import RequestException
@@ -89,6 +88,7 @@ class GameDataHandler:
         Args:
             fields (str): The fields to return
             query_body (str): Additional query parameters
+            data_type (str): Type of data being fetched (top, latest, upcoming)
 
         Returns:
             List[Dict[str, Any]]: List of cleaned game data
@@ -110,7 +110,7 @@ class GameDataHandler:
         Returns:
             List[Dict[str, Any]]: List of top-rated games
         """
-        query_body = f'where aggregated_rating != null; sort aggregated_rating desc; limit {limit}'
+        query_body = f'where aggregated_rating != null & first_release_date != null & cover.image_id !=null; sort aggregated_rating desc; limit {limit}'
         fields = 'name,first_release_date,genres.name,language_supports.language.name,platforms.name,screenshots.image_id,storyline,summary,aggregated_rating,videos.video_id,cover.image_id,involved_companies.company.name'
 
         return self.fetch_games_data(fields=fields, query_body=query_body, data_type='top')
@@ -131,7 +131,7 @@ class GameDataHandler:
         past_date = current_time - timedelta(days=days_back)
         unix_timestamp = int(past_date.timestamp())
 
-        query_body = f'where first_release_date >= {unix_timestamp} & first_release_date <= {int(current_time.timestamp())}; sort first_release_date desc; limit {limit}'
+        query_body = f'where first_release_date >= {unix_timestamp} & first_release_date <= {int(current_time.timestamp())} & cover.image_id !=null; sort first_release_date desc; limit {limit}'
         fields = 'name,first_release_date,genres.name,language_supports.language.name,platforms.name,screenshots.image_id,storyline,summary,aggregated_rating,videos.video_id,cover.image_id,involved_companies.company.name'
 
         return self.fetch_games_data(fields=fields, query_body=query_body, data_type='latest')
@@ -153,12 +153,12 @@ class GameDataHandler:
         current_timestamp = int(current_time.timestamp())
         future_timestamp = int(future_date.timestamp())
 
-        query_body = f'where first_release_date >= {current_timestamp} & first_release_date <= {future_timestamp}; sort first_release_date asc; limit {limit}'
+        query_body = f'where first_release_date >= {current_timestamp} & first_release_date <= {future_timestamp} & cover.image_id !=null; sort first_release_date asc; limit {limit}'
         fields = 'name,first_release_date,genres.name,language_supports.language.name,platforms.name,screenshots.image_id,storyline,summary,aggregated_rating,videos.video_id,cover.image_id,involved_companies.company.name'
 
         return self.fetch_games_data(fields=fields, query_body=query_body, data_type='upcoming')
 
-    def _extract_nested_value(self, data: List[Dict[str, Any]], field: str) -> List[str]:
+    def _extract_nested_value(self, data: Optional[List[Dict[str, Any]]], field: str) -> Optional[List[str]]:
         """
         Generic method to extract values from nested dictionaries in a list.
 
@@ -167,12 +167,12 @@ class GameDataHandler:
             field (str): Field to extract (e.g., 'name')
 
         Returns:
-            List[str]: List of extracted values
+            List[str]: List of extracted values or None if no values
         """
-        result = []
         if not data:
             return None
 
+        result = []
         for item in data:
             if isinstance(item, dict):
                 value = item.get(field, '')
@@ -181,15 +181,15 @@ class GameDataHandler:
 
         return result if result else None
 
-    def _get_genres(self, genres: List[Dict[str, Any]]) -> Optional[List[str]]:
+    def _get_genres(self, genres: Optional[List[Dict[str, Any]]]) -> Optional[List[str]]:
         """Extract genre names from genre data"""
         return self._extract_nested_value(genres, 'name')
 
-    def _get_platforms(self, platforms: List[Dict[str, Any]]) -> Optional[List[str]]:
+    def _get_platforms(self, platforms: Optional[List[Dict[str, Any]]]) -> Optional[List[str]]:
         """Extract platform names from platform data"""
         return self._extract_nested_value(platforms, 'name')
 
-    def _get_screenshots(self, screenshots: List[Dict[str, Any]]) -> Optional[List[str]]:
+    def _get_screenshots(self, screenshots: Optional[List[Dict[str, Any]]]) -> Optional[List[str]]:
         """Extract and format screenshot URLs from screenshot data"""
         if not screenshots:
             return None
@@ -203,7 +203,7 @@ class GameDataHandler:
 
         return result if result else None
 
-    def _get_videos(self, videos: List[Dict[str, Any]]) -> Optional[List[str]]:
+    def _get_videos(self, videos: Optional[List[Dict[str, Any]]]) -> Optional[List[str]]:
         """Extract and format video URLs from video data"""
         if not videos:
             return None
@@ -216,7 +216,7 @@ class GameDataHandler:
 
         return result if result else None
 
-    def _get_developers(self, involved_companies: List[Dict[str, Any]]) -> Optional[List[str]]:
+    def _get_developers(self, involved_companies: Optional[List[Dict[str, Any]]]) -> Optional[List[str]]:
         """Extract developer names from involved companies data"""
         if not involved_companies:
             return None
@@ -231,7 +231,7 @@ class GameDataHandler:
 
         return result if result else None
 
-    def _get_languages(self, languages: List[Dict[str, Any]]) -> Optional[List[str]]:
+    def _get_languages(self, languages: Optional[List[Dict[str, Any]]]) -> Optional[List[str]]:
         """Extract language names from language supports data"""
         if not languages:
             return None
@@ -241,7 +241,7 @@ class GameDataHandler:
             language = language_data.get('language', {})
             if isinstance(language, dict):
                 language_name = language.get('name', '')
-                if language_name and not language_name in result:
+                if language_name and language_name not in result:
                     result.append(language_name)
 
         return result if result else None
@@ -252,6 +252,7 @@ class GameDataHandler:
 
         Args:
             data (List[Dict[str, Any]]): Raw game data from API
+            data_type (str): Type of data (top, latest, upcoming)
 
         Returns:
             List[Dict[str, Any]]: Cleaned and formatted game data
@@ -265,7 +266,10 @@ class GameDataHandler:
             storyline = game.get('storyline')
 
             # Cover image processing
-            cover_url = f'https://images.igdb.com/igdb/image/upload/t_cover_big/{game.get('cover', {}).get('image_id')}.jpg'
+            cover_data = game.get('cover', {})
+            cover_image_id = cover_data.get(
+                'image_id') if isinstance(cover_data, dict) else None
+            cover_url = f'https://images.igdb.com/igdb/image/upload/t_cover_big/{cover_image_id}.jpg' if cover_image_id else None
 
             # Release date processing
             release_date = None
@@ -278,13 +282,12 @@ class GameDataHandler:
                     pass
 
             # Process other fields using helper methods
-            genres = self._get_genres(game.get('genres', []))
-            developers = self._get_developers(
-                game.get('involved_companies', []))
-            platforms = self._get_platforms(game.get('platforms', []))
-            screenshots = self._get_screenshots(game.get('screenshots', []))
-            languages = self._get_languages(game.get('language_supports', []))
-            videos = self._get_videos(game.get('videos', []))
+            genres = self._get_genres(game.get('genres'))
+            developers = self._get_developers(game.get('involved_companies'))
+            platforms = self._get_platforms(game.get('platforms'))
+            screenshots = self._get_screenshots(game.get('screenshots'))
+            languages = self._get_languages(game.get('language_supports'))
+            videos = self._get_videos(game.get('videos'))
 
             # Rating processing
             rating = game.get('aggregated_rating')
@@ -293,6 +296,10 @@ class GameDataHandler:
                     rating = round(float(rating), 1)
                 except (ValueError, TypeError):
                     rating = None
+
+            # Skip games without a name
+            if not name:
+                continue
 
             cleaned_data.append({
                 'name': name,
@@ -311,32 +318,3 @@ class GameDataHandler:
             })
 
         return cleaned_data
-
-    # Test method - for development/debugging only
-    def export_data_to_json(self, data: List[Dict[str, Any]], filename: str = 'game_data.json') -> None:
-        with open(filename, 'w', encoding='utf-8') as game_data:
-            json.dump(data, game_data, indent=4, ensure_ascii=False)
-
-
-# Main function for testing
-def main():
-    load_dotenv()
-    client_id = getenv('TWITCH_CLIENT_ID')
-    client_secret = getenv('TWITCH_SECRET_ID')
-
-    handler = GameDataHandler(client_id=client_id, client_secret=client_secret)
-
-    top_games = handler.get_top_games(limit=10)
-    handler.export_data_to_json(top_games, 'top_games.json')
-
-    latest_games = handler.get_latest_games(limit=10, days_back=30)
-    handler.export_data_to_json(latest_games, 'latest_games.json')
-
-    upcoming_games = handler.get_upcoming_games(limit=10, days_ahead=90)
-    handler.export_data_to_json(upcoming_games, 'upcoming_games.json')
-
-    print("All operations completed successfully. Check the JSON files for results.")
-
-
-if __name__ == '__main__':
-    main()

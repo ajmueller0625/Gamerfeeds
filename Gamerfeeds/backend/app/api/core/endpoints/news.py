@@ -1,6 +1,6 @@
 from fastapi import Depends, APIRouter, HTTPException, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from app.api.db_setup import get_db
 
 from app.api.core.models import Author, SourceName, News
@@ -16,11 +16,27 @@ router = APIRouter(tags=['news'])
 
 @router.get('/news', status_code=status.HTTP_200_OK)
 def get_all_news(db: Session = Depends(get_db)):
-    all_news = db.scalars(select(News)).all()
+    query = select(News).options(selectinload(News.author)
+                                 ).options(selectinload(News.source_name))
+    all_news = db.scalars(query).all()
     if not all_news:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail='No news found')
-    return all_news
+    result = []
+    for news in all_news:
+        result.append({
+            'id': news.id,
+            'title': news.title,
+            'description': news.description,
+            'image_url': news.image_url,
+            'source_url': news.source_url,
+            'content': news.content,
+            'author': news.author.name,
+            'source_name': news.source_name.name,
+            'published': news.published
+        })
+
+    return result
 
 
 @router.post('/news', status_code=status.HTTP_201_CREATED, response_model=NewsResponseSchema)

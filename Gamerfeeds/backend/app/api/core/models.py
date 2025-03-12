@@ -71,7 +71,7 @@ class Game(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(
-        String(100), nullable=False, unique=True)
+        String(255), nullable=False)
     summary: Mapped[str] = mapped_column(Text, nullable=True)
     storyline: Mapped[str] = mapped_column(Text, nullable=True)
     cover_image_url: Mapped[str] = mapped_column(

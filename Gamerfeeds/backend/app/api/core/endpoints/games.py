@@ -62,6 +62,101 @@ def get_all_games(db: Session = Depends(get_db)):
     return all_games
 
 
+# Move specific routes BEFORE the id route
+@router.get('/games/topgames', status_code=status.HTTP_200_OK)
+def get_top_games(db: Session = Depends(get_db)):
+    top_games = get_games_by_data_type(db=db, data_type='top')
+
+    if not top_games:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
+
+    return top_games
+
+
+@router.get('/games/latestgames', status_code=status.HTTP_200_OK)
+def get_latest_games(db: Session = Depends(get_db)):
+    latest_games = get_games_by_data_type(db=db, data_type='latest')
+
+    if not latest_games:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
+
+    return latest_games
+
+
+@router.get('/games/upcominggames', status_code=status.HTTP_200_OK)
+def get_upcoming_games(db: Session = Depends(get_db)):
+    upcoming_games = get_games_by_data_type(db=db, data_type='upcoming')
+
+    if not upcoming_games:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
+
+    return upcoming_games
+
+
+@router.get('/games/developers', status_code=status.HTTP_200_OK)
+def get_all_developers(db: Session = Depends(get_db)):
+    all_developers = db.scalars(select(Developer)).all()
+    if not all_developers:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='No developers found')
+
+    return all_developers
+
+
+@router.get('/games/platforms', status_code=status.HTTP_200_OK)
+def get_all_platforms(db: Session = Depends(get_db)):
+    all_platforms = db.scalars(select(Platform)).all()
+    if not all_platforms:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='No platforms found')
+
+    return all_platforms
+
+
+@router.get('/games/languages', status_code=status.HTTP_200_OK)
+def get_all_languages(db: Session = Depends(get_db)):
+    all_languages = db.scalars(select(Language)).all()
+    if not all_languages:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='No languages found')
+
+    return all_languages
+
+
+@router.get('/games/genres', status_code=status.HTTP_200_OK)
+def get_all_genres(db: Session = Depends(get_db)):
+    all_genres = db.scalars(select(Genre)).all()
+    if not all_genres:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='No genres found')
+
+    return all_genres
+
+
+@router.get('/games/screenshots', status_code=status.HTTP_200_OK)
+def get_all_screenshots(db: Session = Depends(get_db)):
+    all_screenshots = db.scalars(select(Screenshot)).all()
+    if not all_screenshots:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='No screenshots found')
+
+    return all_screenshots
+
+
+@router.get('/games/videos', status_code=status.HTTP_200_OK)
+def get_all_videos(db: Session = Depends(get_db)):
+    all_videos = db.scalars(select(Video)).all()
+    if not all_videos:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='No videos found')
+
+    return all_videos
+
+
+# Now place the id route AFTER the more specific paths
 @router.get('/games/{id}', status_code=status.HTTP_200_OK)
 def get_game_by_id(id: int, db: Session = Depends(get_db)):
     query = (select(Game)
@@ -216,63 +311,113 @@ def update_game(id: int, game_update: GameSchema, db: Session = Depends(get_db))
 
     return exist_game
 
-# Helper function that gets the related objects to a game or create a new relation if needed
 
-
-def get_or_create_related_objects(db: Session, model_class: Any, items: List[str], unique_field='name'):
-    result = []
-
-    for item in items:
-        object = db.scalars(select(model_class).where(
-            getattr(model_class, unique_field) == item)).first()
-
-        if object:
-            result.append(object)
-
-        else:
-            new_object = model_class(**{unique_field: item})
-            db.add(new_object)
-            db.flush()
-
-            result.append(new_object)
-
-    return result
-
-
-@router.get('/games/topgames/', status_code=status.HTTP_200_OK)
-def get_top_games(db: Session = Depends(get_db)):
-    top_games = get_games_by_data_type(db=db, data_type='top')
-
-    if not top_games:
+@router.delete('/games/{id}', status_code=status.HTTP_204_NO_CONTENT)
+def delete_game(id: int, db: Session = Depends(get_db)):
+    exist_game = db.scalars(select(Game).where(Game.id == id)).first()
+    if not exist_game:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
+            status_code=status.HTTP_404_NOT_FOUND, detail='No game found')
 
-    return top_games
+    db.execute(delete(Game).where(Game.id == id))
+    db.commit()
 
-
-@router.get('/games/latestgames', status_code=status.HTTP_200_OK)
-def get_latest_games(db: Session = Depends(get_db)):
-    latest_games = get_games_by_data_type(db=db, data_type='latest')
-
-    if not latest_games:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
-
-    return latest_games
+    return {'message': f'Game with id: {id} has been deleted'}
 
 
-@router.get('/games/upcominggames', status_code=status.HTTP_200_OK)
-def get_upcoming_games(db: Session = Depends(get_db)):
-    upcoming_games = get_games_by_data_type(db=db, data_type='upcoming')
+@router.post('/games/developers', status_code=status.HTTP_201_CREATED, response_model=DeveloperResponseSchema)
+def add_developer(developer: DeveloperSchema, db: Session = Depends(get_db)):
+    exist_developer = db.scalars(select(Developer).where(
+        Developer.name == developer.name)).one_or_none()
 
-    if not upcoming_games:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
+    if exist_developer:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail='Developer already exist')
+    new_developer = Developer(**developer.model_dump())
+    db.add(new_developer)
+    db.commit()
 
-    return upcoming_games
+    return new_developer
 
 
-# Helper function to get game data to avoid code repitition
+@router.post('/games/platforms', status_code=status.HTTP_201_CREATED, response_model=PlatformResponseSchema)
+def add_platform(platform: PlatformSchema, db: Session = Depends(get_db)):
+    exist_platform = db.scalars(select(Platform).where(
+        Platform.name == platform.name)).one_or_none()
+
+    if exist_platform:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail='Platform already exist')
+    # Fixed: changed Developer to Platform
+    new_platform = Platform(**platform.model_dump())
+    db.add(new_platform)
+    db.commit()
+
+    return new_platform
+
+
+@router.post('/games/languages', status_code=status.HTTP_201_CREATED, response_model=LanguageResponseSchema)
+def add_language(language: LanguageSchema, db: Session = Depends(get_db)):
+    exist_language = db.scalars(select(Language).where(
+        Language.name == language.name)).one_or_none()
+
+    if exist_language:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail='Language already exist')
+    new_language = Language(**language.model_dump())
+    db.add(new_language)
+    db.commit()
+
+    return new_language
+
+
+@router.post('/games/genres', status_code=status.HTTP_201_CREATED, response_model=GenreResponseSchema)
+def add_genre(genre: GenreSchema, db: Session = Depends(get_db)):
+    exist_genre = db.scalars(select(Genre).where(
+        Genre.name == genre.name)).one_or_none()
+
+    if exist_genre:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail='Genre already exist')
+    new_genre = Genre(**genre.model_dump())
+    db.add(new_genre)
+    db.commit()
+
+    return new_genre
+
+
+@router.post('/games/screenshots', status_code=status.HTTP_201_CREATED, response_model=ScreenshotResponseSchema)
+def add_screenshot(screenshot: ScreenshotSchema, db: Session = Depends(get_db)):
+    exist_screenshot = db.scalars(select(Screenshot).where(
+        Screenshot.screenshot_url == screenshot.screenshot_url)).one_or_none()
+
+    if exist_screenshot:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail='Screenshot already exist')
+    new_screenshot = Screenshot(**screenshot.model_dump())
+    db.add(new_screenshot)
+    db.commit()
+
+    return new_screenshot
+
+
+@router.post('/games/videos', status_code=status.HTTP_201_CREATED, response_model=VideoResponseSchema)
+def add_video(video: VideoSchema, db: Session = Depends(get_db)):
+    exist_video = db.scalars(select(Video).where(
+        Video.video_url == video.video_url)).one_or_none()
+
+    if exist_video:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail='Video already exist')
+    # Fixed: changed Screenshot to Video
+    new_video = Video(**video.model_dump())
+    db.add(new_video)
+    db.commit()
+
+    return new_video
+
+
+# Helper function to get game data to avoid code repetition
 def get_games_by_data_type(db: Session, data_type: str):
     query = (select(Game)
              .join(GameDataType, GameDataType.id == Game.data_type_id)
@@ -309,164 +454,22 @@ def get_games_by_data_type(db: Session, data_type: str):
     return result
 
 
-@router.delete('/games/{id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_game(id: int, db: Session = Depends(get_db)):
-    exist_game = db.scalars(select(Game).where(Game.id == id)).first()
-    if not exist_game:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail='No game found')
+# Helper function that gets the related objects to a game or create a new relation if needed
+def get_or_create_related_objects(db: Session, model_class: Any, items: List[str], unique_field='name'):
+    result = []
 
-    db.execute(delete(Game).where(Game.id == id))
-    db.commit()
+    for item in items:
+        object = db.scalars(select(model_class).where(
+            getattr(model_class, unique_field) == item)).first()
 
-    return {'message': f'Game with id: {id} has been deleted'}
+        if object:
+            result.append(object)
 
+        else:
+            new_object = model_class(**{unique_field: item})
+            db.add(new_object)
+            db.flush()
 
-@router.get('/games/developers', status_code=status.HTTP_200_OK)
-def get_all_developers(db: Session = Depends(get_db)):
-    all_developers = db.scalars(select(Developer)).all()
-    if not all_developers:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail='No developers found')
+            result.append(new_object)
 
-    return all_developers
-
-
-@router.post('/games/developers', status_code=status.HTTP_201_CREATED, response_model=DeveloperResponseSchema)
-def add_developer(developer: DeveloperSchema, db: Session = Depends(get_db)):
-    exist_developer = db.scalars(select(Developer).where(
-        Developer.name == developer.name)).one_or_none()
-
-    if exist_developer:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail='Developer already exist')
-    new_developer = Developer(**developer.model_dump())
-    db.add(new_developer)
-    db.commit()
-
-    return new_developer
-
-
-@router.get('/games/platforms', status_code=status.HTTP_200_OK)
-def get_all_platforms(db: Session = Depends(get_db)):
-    all_platforms = db.scalars(select(Platform)).all()
-    if not all_platforms:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail='No platforms found')
-
-    return all_platforms
-
-
-@router.post('/games/platforms', status_code=status.HTTP_201_CREATED, response_model=PlatformResponseSchema)
-def add_platform(platform: PlatformSchema, db: Session = Depends(get_db)):
-    exist_platform = db.scalars(select(Platform).where(
-        Platform.name == platform.name)).one_or_none()
-
-    if exist_platform:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail='Platform already exist')
-    new_platform = Developer(**platform.model_dump())
-    db.add(new_platform)
-    db.commit()
-
-    return new_platform
-
-
-@router.get('/games/languages', status_code=status.HTTP_200_OK)
-def get_all_platforms(db: Session = Depends(get_db)):
-    all_languages = db.scalars(select(Language)).all()
-    if not all_languages:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail='No languages found')
-
-    return all_languages
-
-
-@router.post('/games/languages', status_code=status.HTTP_201_CREATED, response_model=LanguageResponseSchema)
-def add_language(language: LanguageSchema, db: Session = Depends(get_db)):
-    exist_language = db.scalars(select(Language).where(
-        Language.name == language.name)).one_or_none()
-
-    if exist_language:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail='Language already exist')
-    new_language = Language(**language.model_dump())
-    db.add(new_language)
-    db.commit()
-
-    return new_language
-
-
-@router.get('/games/genres', status_code=status.HTTP_200_OK)
-def get_all_genres(db: Session = Depends(get_db)):
-    all_genres = db.scalars(select(Genre)).all()
-    if not all_genres:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail='No genres found')
-
-    return all_genres
-
-
-@router.post('/games/genres', status_code=status.HTTP_201_CREATED, response_model=GenreResponseSchema)
-def add_genre(genre: GenreSchema, db: Session = Depends(get_db)):
-    exist_genre = db.scalars(select(Genre).where(
-        Genre.name == genre.name)).one_or_none()
-
-    if exist_genre:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail='Genre already exist')
-    new_genre = Genre(**genre.model_dump())
-    db.add(new_genre)
-    db.commit()
-
-    return new_genre
-
-
-@router.get('/games/screenshots', status_code=status.HTTP_200_OK)
-def get_all_screenshots(db: Session = Depends(get_db)):
-    all_screenshots = db.scalars(select(Screenshot)).all()
-    if not all_screenshots:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail='No screenshots found')
-
-    return all_screenshots
-
-
-@router.post('/games/screenshots', status_code=status.HTTP_201_CREATED, response_model=ScreenshotResponseSchema)
-def add_screenshot(screenshot: ScreenshotSchema, db: Session = Depends(get_db)):
-    exist_screenshot = db.scalars(select(Screenshot).where(
-        Screenshot.screenshot_url == screenshot.screenshot_url)).one_or_none()
-
-    if exist_screenshot:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail='Screenshot already exist')
-    new_screenshot = Screenshot(**screenshot.model_dump())
-    db.add(new_screenshot)
-    db.commit()
-
-    return new_screenshot
-
-
-@router.get('/games/videos', status_code=status.HTTP_200_OK)
-def get_all_videos(db: Session = Depends(get_db)):
-    all_videos = db.scalars(select(Video)).all()
-    if not all_videos:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail='No videos found')
-
-    return all_videos
-
-
-@router.post('/games/videos', status_code=status.HTTP_201_CREATED, response_model=VideoResponseSchema)
-def add_video(video: VideoSchema, db: Session = Depends(get_db)):
-    exist_video = db.scalars(select(Video).where(
-        Video.video_url == video.video_url)).one_or_none()
-
-    if exist_video:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail='Video already exist')
-    new_video = Screenshot(**video.model_dump())
-    db.add(new_video)
-    db.commit()
-
-    return new_video
+    return result
