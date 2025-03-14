@@ -8,8 +8,8 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
-    children: []
-  }
+    children: [],
+  },
 ]);
 
 createRoot(document.getElementById("root")!).render(

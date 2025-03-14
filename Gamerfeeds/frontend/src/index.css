@@ -1,2 +1,56 @@
 @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Hubot+Sans:wdth,wght@87.5,200..900&display=swap');
 @import "tailwindcss";
+
+:root {
+    --color-background: #ffffff;
+    --color-nav-backrgound: #2563eb;
+    --color-text: #374151;
+    --nav-hover-bg: #3b82f6;
+    --dropdown-nav-bg: #3b82f6;
+    --dropdown-nav-hover: #60a5fa;
+
+}
+
+.dark {
+    color-scheme: dark;
+
+    --color-background: #171717;
+    --color-nav-backrgound: #0a0a0a; 
+    --color-text: #ffffff;
+    --nav-hover-bg: #262626;
+    --dropdown-nav-bg: #262626 ;
+    --dropdown-nav-hover: #404040;
+}
+
+body {
+    background-color: var(--color-background);
+}
+
+header {
+    background-color: var(--color-nav-backrgound) !important;
+    color: #ffffff;
+}
+
+.nav-hover-color:hover {
+    background-color: var(--nav-hover-bg) !important;
+}
+
+.nav-ul-background {
+    background-color: var(--dropdown-nav-bg);
+}
+
+.nav-border-bottom {
+    border-bottom: 1px solid var(--dropdown-nav-hover);
+}
+
+.nav-li-background:hover {
+    background-color: var(--dropdown-nav-hover);
+}
+
+.sign-in-btn {
+    background-color: var(--dropdown-nav-bg);
+}
+
+.sign-in-btn:hover {
+    background-color: var(--dropdown-nav-hover);
+}
