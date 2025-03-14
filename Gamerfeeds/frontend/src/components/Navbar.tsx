@@ -17,7 +17,7 @@ export default function Navbar() {
 
   return (
     <header className="w-screen fixed top-0 z-50">
-      <nav className="flex items-center justify-between max-w-7xl mx-auto py-4 px-6">
+      <nav className="flex items-center justify-between max-w-7xl mx-auto py-4 space-x-15">
         <div className="flex items-center space-x-6 font-semibold">
           <Link to="/">
             <img src="src/assets/logo.png" alt="Site Logo" className="h-10" />
@@ -57,14 +57,12 @@ export default function Navbar() {
               {isGameDropdownActive && (
                 <ul className="absolute rounded-b-lg rounded-tr-lg nav-ul-background shadow-md shadow-neutral-950/50">
                   <Link to="">
-                    <li className="p-4 nav-li-background nav-border-bottom rounded-tr-lg">
+                    <li className="p-4 nav-li-background rounded-tr-lg">
                       Top Games
                     </li>
                   </Link>
                   <Link to="">
-                    <li className="p-4 nav-li-background nav-border-bottom">
-                      Latest Games
-                    </li>
+                    <li className="p-4 nav-li-background">Latest Games</li>
                   </Link>
                   <Link to="">
                     <li className="p-4 nav-li-background rounded-b-lg">
@@ -95,22 +93,21 @@ export default function Navbar() {
             <div
               className={`
                   ${isDarkMode ? "bg-neutral-700" : "bg-cyan-400"} 
-                  flex h-6 w-11 items-center rounded-full p-1 transition-colors duration-300
+                  inline-flex h-6 w-11 items-center rounded-full p-1 transition-colors duration-300
                 `}
             >
               <div
                 className={`
                     ${isDarkMode ? "translate-x-5" : "translate-x-0"} 
-                    inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300
+                    flex items-center justify-center h-5 w-5 transform rounded-full bg-white transition-transform duration-300
                   `}
-              />
-            </div>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-12">
-              {isDarkMode ? (
-                <Moon size={14} className="text-white" />
-              ) : (
-                <Sun size={14} className="text-white" />
-              )}
+              >
+                {isDarkMode ? (
+                  <Moon size={14} className="text-neutral-700" />
+                ) : (
+                  <Sun size={14} className="text-yellow-700" />
+                )}
+              </div>
             </div>
           </button>
           <Link to="">

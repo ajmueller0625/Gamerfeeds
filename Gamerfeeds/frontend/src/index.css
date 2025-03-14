@@ -39,11 +39,11 @@ header {
     background-color: var(--dropdown-nav-bg);
 }
 
-.nav-border-bottom {
+.nav-ul-background li {
     border-bottom: 1px solid var(--dropdown-nav-hover);
 }
 
-.nav-li-background:hover {
+.nav-ul-background li:hover {
     background-color: var(--dropdown-nav-hover);
 }
 
