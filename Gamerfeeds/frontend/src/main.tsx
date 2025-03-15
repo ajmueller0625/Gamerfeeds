@@ -3,12 +3,18 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { StrictMode } from "react";
 import "./index.css";
 import Layout from "./pages/Layout";
+import Home from "./pages/Home";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
-    children: [],
+    children: [
+      {
+        path: "",
+        element: <Home />,
+      },
+    ],
   },
 ]);
 

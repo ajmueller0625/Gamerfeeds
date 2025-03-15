@@ -4,7 +4,7 @@
 :root {
     --color-background: #ffffff;
     --color-nav-backrgound: #2563eb;
-    --color-text: #374151;
+    --color-border: #262626;
     --nav-hover-bg: #3b82f6;
     --dropdown-nav-bg: #3b82f6;
     --dropdown-nav-hover: #60a5fa;
@@ -16,7 +16,7 @@
 
     --color-background: #171717;
     --color-nav-backrgound: #0a0a0a; 
-    --color-text: #ffffff;
+    --color-border: #ffffff;
     --nav-hover-bg: #262626;
     --dropdown-nav-bg: #262626 ;
     --dropdown-nav-hover: #404040;
@@ -53,4 +53,9 @@ header {
 
 .sign-in-btn:hover {
     background-color: var(--dropdown-nav-hover);
+}
+
+.div-header {
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-border);
 }
