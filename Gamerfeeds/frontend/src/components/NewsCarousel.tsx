@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import useNewsStore from "../store/newsStore";
 import { AnimatePresence, motion } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function NewsCarousel() {
   const { news, isLoading, error, fetchLatestNews } = useNewsStore();
@@ -30,7 +32,7 @@ export default function NewsCarousel() {
       id: item.id,
       title: item.title,
       image_url: item.image_url,
-      description: item.description,
+      description: item.description || "",
     }));
 
   useEffect(() => {
@@ -133,17 +135,71 @@ export default function NewsCarousel() {
                 alt={`Slide: ${carouselData[currentIndex].title}`}
                 className="absolute w-full h-full object-cover"
               />
-              <div className="font-[Hubot_Sans] absolute start-0 bottom-0 w-full px-10 py-5 bg-neutral-900/50 text-white">
-                <h3 className="text-xl font-bold underline">
-                  {carouselData[currentIndex].title}
-                </h3>
-                <p className="text-sm">
-                  {carouselData[currentIndex].description}
-                </p>
-              </div>
+              <Link to="">
+                <div
+                  className="font-[Hubot_Sans] absolute start-0 bottom-0 w-full px-10 py-5
+                 bg-neutral-900/50 hover:bg-neutral-800/50 text-white"
+                >
+                  <h3 className="text-xl font-bold underline">
+                    {carouselData[currentIndex].title}
+                  </h3>
+                  <p className="text-sm">
+                    {carouselData[currentIndex].description}
+                  </p>
+                </div>
+              </Link>
             </motion.div>
           </AnimatePresence>
+          <button
+            onClick={handlePrevImage}
+            className="absolute top-1/2 start-2 flex justify-center text-white rounded-full
+             hover:bg-neutral-600/50 hover:cursor-pointer p-2"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <button
+            onClick={handleNextImage}
+            className="absolute top-1/2 end-2 flex justify-center text-white rounded-full
+             hover:bg-neutral-600/50 hover:cursor-pointer p-2"
+          >
+            <ChevronRight size={20} />
+          </button>
+          <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 flex space-x-2">
+            {carouselData.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => changeImage(index)}
+                className={`h-2 w-2 rounded-full transition-all duration-300 cursor-pointer 
+                  ${
+                    currentIndex === index
+                      ? "bg-neutral-500/50 scale-125"
+                      : "bg-neutral-300/50"
+                  }`}
+              />
+            ))}
+          </div>
         </div>
+        {cardData.map((card) => (
+          <Link to="">
+            <div
+              key={card.id}
+              className="rounded-md relative h-49 border-2 hover:cursor-pointer hover:border-0 
+              border-transparent text-white"
+            >
+              <img
+                src={card.image_url}
+                alt={`Card Image ${card.id}`}
+                className="object-cover w-full h-full rounded-lg"
+              />
+              <div
+                className="absolute bottom-0 left-0 w-full px-3 py-2 bg-neutral-900/60 
+               font-[Hubot_Sans] rounded-b-lg"
+              >
+                <h3 className="text-xs font-bold">{card.title}</h3>
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );
