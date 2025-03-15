@@ -178,6 +178,7 @@ class NewsDataHandler:
             processed_article = {
                 'title': article.get('title', ''),
                 'author': self._extract_author_name(article.get('author', '')),
+                'description': article.get('description', ''),
                 'url': article.get('url', ''),
                 'urlToImage': article.get('urlToImage', ''),
                 'publishedAt': article.get('publishedAt', ''),

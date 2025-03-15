@@ -30,19 +30,20 @@ export default function NewsCarousel() {
       id: item.id,
       title: item.title,
       image_url: item.image_url,
-      description: item.description || "",
+      description: item.description,
     }));
 
   useEffect(() => {
-    console.log("Carousel data:", carouselData);
-    console.log("Card data:", cardData);
-  }, [carouselData, cardData]);
+    console.log(carouselData);
+  }, [carouselData]);
 
   const intervalRef = useRef<number | null>(null);
 
   const nextImage = useCallback(() => {
-    setDirection(1);
-    setCurrentIndex((nextIndex) => (nextIndex + 1) % carouselData.length);
+    if (carouselData.length > 0) {
+      setDirection(1);
+      setCurrentIndex((nextIndex) => (nextIndex + 1) % carouselData.length);
+    }
   }, [carouselData.length]);
 
   const resetInterval = useCallback(() => {
@@ -53,10 +54,13 @@ export default function NewsCarousel() {
   }, [nextImage]);
 
   const prevImage = useCallback(() => {
-    setDirection(-1);
-    setCurrentIndex(
-      (prevIndex) => (prevIndex - 1 + carouselData.length) % carouselData.length
-    );
+    if (carouselData.length > 0) {
+      setDirection(-1);
+      setCurrentIndex(
+        (prevIndex) =>
+          (prevIndex - 1 + carouselData.length) % carouselData.length
+      );
+    }
   }, [carouselData.length]);
 
   const handleNextImage = () => {
@@ -91,7 +95,7 @@ export default function NewsCarousel() {
     if (carouselData.length > 0) {
       setCurrentIndex(0);
     }
-  }, [carouselData]);
+  }, [carouselData.length]);
 
   //Change Later
   if (isLoading) {
