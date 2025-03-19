@@ -90,7 +90,7 @@ export default function NewsCarousel({ carouseldata }: CarouselProps) {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-lg w-full h-100">
+    <div className="relative overflow-hidden rounded-lg w-full h-105">
       <AnimatePresence initial={false} custom={direction} mode="wait">
         <motion.div
           key={carouseldata[currentIndex]?.id || "placeholder"}
@@ -107,7 +107,7 @@ export default function NewsCarousel({ carouseldata }: CarouselProps) {
           />
           <Link to="">
             <div
-              className="font-[Hubot_Sans] absolute start-0 bottom-0 w-full px-10 py-5
+              className="font-[Hubot_Sans] absolute start-0 bottom-0 w-full px-10 pt-5 pb-10
                  bg-neutral-900/50 hover:bg-neutral-800/50 text-white"
             >
               <h3 className="text-xl font-bold underline">

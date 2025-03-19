@@ -163,3 +163,38 @@ def get_latest_news_with_limit(limit: int, db: Session = Depends(get_db)):
         })
 
     return result
+
+
+@router.get('/news/source/{source_name}/{limit}', status_code=status.HTTP_200_OK)
+def get_latest_news_by_source_with_limit(source_name: str, limit: int, db: Session = Depends(get_db)):
+    source = db.scalars(select(SourceName).where(
+        SourceName.name == source_name)).one_or_none()
+
+    if not source:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f'Source name {source_name} not found')
+
+    query = select(News).where(News.source_id == source.id).order_by(desc(News.published)).options(
+        selectinload(News.author)).options(selectinload(News.source_name)).limit(limit)
+
+    news_list = db.execute(query).scalars().all()
+
+    if not news_list:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f'No news found for source {source_name}')
+
+    result = []
+    for news in news_list:
+        result.append({
+            'id': news.id,
+            'title': news.title,
+            'description': news.description,
+            'image_url': news.image_url,
+            'source_url': news.source_url,
+            'content': news.content,
+            'author': news.author.name,
+            'source_name': news.source_name.name,
+            'published': news.published
+        })
+
+    return result

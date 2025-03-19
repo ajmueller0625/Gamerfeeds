@@ -86,14 +86,14 @@ export default function Navbar() {
           <button
             type="button"
             onClick={toggleTheme}
-            className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none"
+            className="relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-300 focus:outline-none"
             aria-pressed={isDarkMode}
           >
             <span className="sr-only">Toggle dark mode</span>
             <div
               className={`
                   ${isDarkMode ? "bg-neutral-700" : "bg-cyan-400"} 
-                  inline-flex h-6 w-11 items-center rounded-full p-1 transition-colors duration-300
+                  inline-flex h-6 w-10 items-center rounded-full transition-colors duration-300
                 `}
             >
               <div
