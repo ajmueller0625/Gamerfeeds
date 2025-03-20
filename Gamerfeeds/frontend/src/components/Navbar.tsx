@@ -36,7 +36,7 @@ export default function Navbar() {
             <Link to="/">
               <li className="py-2 px-6 rounded-lg nav-hover-color">Home</li>
             </Link>
-            <Link to="">
+            <Link to="/news">
               <li className="py-2 px-6 rounded-lg nav-hover-color">News</li>
             </Link>
             <li
@@ -111,7 +111,7 @@ export default function Navbar() {
             </div>
           </button>
           <Link to="">
-            <button className="font-[Black_Ops_One] text-sm py-2 px-6 rounded-full sign-in-btn hover:cursor-pointer">
+            <button className="font-[Black_Ops_One] text-sm py-2 px-6 rounded-full custom-button hover:cursor-pointer">
               Sign in
             </button>
           </Link>

@@ -8,7 +8,9 @@
     --nav-hover-bg: #3b82f6;
     --dropdown-nav-bg: #3b82f6;
     --dropdown-nav-hover: #60a5fa;
-    --card-bg: #e5e7eb;
+    --card-bg: #f3f4f6;
+    --filter-button: #d1d5db;
+    --filter-button-hover: #e5e7eb; 
 }
 
 .dark {
@@ -21,6 +23,8 @@
     --dropdown-nav-bg: #262626 ;
     --dropdown-nav-hover: #404040;
     --card-bg: #292524;
+    --filter-button: #404040;
+    --filter-button-hover:#525252;
 }
 
 body {
@@ -53,11 +57,11 @@ footer {
     background-color: var(--dropdown-nav-hover);
 }
 
-.sign-in-btn {
+.custom-button {
     background-color: var(--dropdown-nav-bg);
 }
 
-.sign-in-btn:hover {
+.custom-button:hover {
     background-color: var(--dropdown-nav-hover);
 }
 
@@ -68,4 +72,11 @@ footer {
 
 .card-background {
     background-color: var(--card-bg);
+}
+
+.filter-button {
+    background-color: var(--filter-button);
+}
+.filter-button:hover {
+    background-color: var(--filter-button-hover);
 }

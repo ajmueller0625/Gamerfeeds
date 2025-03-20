@@ -71,7 +71,7 @@ export default function GameCard({
   };
 
   return (
-    <div className="flex flex-col p-3 gap-2 rounded-lg w-60 h-90 card-background transition-all duration-300 transform hover:scale-105">
+    <div className="flex flex-col p-3 gap-2 rounded-lg w-57 h-87 card-background transition-all duration-300 transform hover:scale-105">
       <div className="overflow-hidden w-full h-65 rounded-lg">
         <img
           src={cover_image_url}

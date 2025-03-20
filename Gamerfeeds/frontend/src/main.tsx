@@ -4,6 +4,7 @@ import { StrictMode } from "react";
 import "./index.css";
 import Layout from "./pages/Layout";
 import Home from "./pages/Home";
+import News from "./pages/News";
 
 const router = createBrowserRouter([
   {
@@ -13,6 +14,10 @@ const router = createBrowserRouter([
       {
         path: "",
         element: <Home />,
+      },
+      {
+        path: "/news",
+        element: <News />,
       },
     ],
   },

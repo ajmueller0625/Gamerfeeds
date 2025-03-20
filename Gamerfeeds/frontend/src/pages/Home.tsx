@@ -283,7 +283,7 @@ export default function Home() {
           <div className="flex flex-col gap-5">
             {firstSourceNews.length > 0 ? (
               firstSourceNews.map((news) => (
-                <div key={news.id} className="w-90 h-50">
+                <div key={news.id} className="w-95 h-50">
                   <Link to="" key={news.id}>
                     <NewsCard
                       id={news.id}
@@ -336,7 +336,7 @@ export default function Home() {
           <div className="flex flex-col gap-5">
             {secondSourceNews.length > 0 ? (
               secondSourceNews.map((news) => (
-                <div key={news.id} className="w-90 h-50">
+                <div key={news.id} className="w-95 h-50">
                   <Link to="" key={news.id}>
                     <NewsCard
                       id={news.id}

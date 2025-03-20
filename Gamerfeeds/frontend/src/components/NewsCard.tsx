@@ -16,7 +16,7 @@ export default function NewsCard({ id, image_url, title }: CardData) {
         className="absolute bottom-0 left-0 w-full px-3 py-2 bg-neutral-900/50 
                font-[Hubot_Sans] rounded-b-lg"
       >
-        <h3 className="text-sm font-bold">{title}</h3>
+        <h3 className="font-bold">{title}</h3>
       </div>
     </div>
   );
