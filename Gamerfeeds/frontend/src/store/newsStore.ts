@@ -31,7 +31,7 @@ export interface SourceData {
 
 export interface PaginationData {
     page: number;
-    items_per_page: number;
+    perPage: number;
     total_items: number;
     total_pages: number;
 }
@@ -49,11 +49,10 @@ interface NewsState {
     isSourcesLoading: boolean;
     newsError: string | null;
     sourcesError: string | null;
-    fetchLatestNews: (limit: number) => Promise<void>;
     fetchNewsBySource: (source: string, limit: number) => Promise<void>; 
     fetchNewsFromRandomSources: (limit: number) => Promise<RandomSourceNews>;
     fetchAllSources: () => Promise<void>;
-    fetchPaginatedNews: (page: number, items_per_page: number, source?: string, published?: string) => Promise<void>;
+    fetchPaginatedNews: (page: number, perPage: number, source?: string, published?: string) => Promise<void>;
 }
 
 const useNewsStore = create<NewsState>((set) =>({
@@ -64,22 +63,6 @@ const useNewsStore = create<NewsState>((set) =>({
     isSourcesLoading: false,
     newsError: null,
     sourcesError: null,
-    fetchLatestNews: async (limit: number) => {
-        try {
-            set({ isNewsLoading: true, newsError: null});
-            const response = await fetch(`${API_URL}/news/latest/${limit}`);
-
-            if(!response.ok) {
-                throw new Error('Failed to fetch news');
-            }
-
-            const data = await response.json();
-            set({ news: data, isNewsLoading: false });
-
-        } catch (error) {
-            set({ newsError: (error as Error).message, isNewsLoading: false });
-        }
-    },
     fetchNewsBySource: async (source: string, limit: number) => {
         try {
             set({ isNewsLoading: true, newsError: null });
@@ -175,17 +158,17 @@ const useNewsStore = create<NewsState>((set) =>({
             set({ sourcesError: (error as Error).message, isSourcesLoading: false });
         }
     },
-    fetchPaginatedNews: async (page: number, items_per_page: number, source?: string, published?: string) => {
+    fetchPaginatedNews: async (page: number, perPage: number, source?: string, published?: string) => {
         try {
             set({ isNewsLoading: true, newsError: null });
-            let url = `${API_URL}/news?page=${page}&items_per_page=${items_per_page}`
+            let url = `${API_URL}/news?page=${page}&perPage=${perPage}`
 
             if (source) {
-                url += `&source=${encodeURIComponent(source)}`
+                url += `&source=${encodeURIComponent(source)}`;
             }
 
             if (published) {
-                url += `&published_date=${encodeURIComponent(published)}`
+                url += `&published_date=${encodeURIComponent(published)}`;
             }
 
             const response = await fetch(url);
@@ -196,7 +179,7 @@ const useNewsStore = create<NewsState>((set) =>({
                         news: [],
                         pagination: {
                             page: page,
-                            items_per_page: items_per_page,
+                            perPage: perPage,
                             total_items: 0,
                             total_pages: 0
                         },

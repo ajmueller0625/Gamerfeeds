@@ -5,6 +5,9 @@ import "./index.css";
 import Layout from "./pages/Layout";
 import Home from "./pages/Home";
 import News from "./pages/News";
+import TopGames from "./pages/TopGames";
+import LatestGames from "./pages/LatestGames";
+import UpcomingGames from "./pages/UpcomingGames";
 
 const router = createBrowserRouter([
   {
@@ -18,6 +21,18 @@ const router = createBrowserRouter([
       {
         path: "/news",
         element: <News />,
+      },
+      {
+        path: "/topgames",
+        element: <TopGames />,
+      },
+      {
+        path: "/latestgames",
+        element: <LatestGames />,
+      },
+      {
+        path: "/upcominggames",
+        element: <UpcomingGames />,
       },
     ],
   },

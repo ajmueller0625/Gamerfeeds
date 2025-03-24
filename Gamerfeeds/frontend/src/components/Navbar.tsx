@@ -56,15 +56,15 @@ export default function Navbar() {
               </button>
               {isGameDropdownActive && (
                 <ul className="absolute rounded-b-lg rounded-tr-lg nav-ul-background shadow-md shadow-neutral-950/50">
-                  <Link to="">
+                  <Link to="/topgames">
                     <li className="p-4 nav-li-background rounded-tr-lg">
                       Top Games
                     </li>
                   </Link>
-                  <Link to="">
+                  <Link to="/latestgames">
                     <li className="p-4 nav-li-background">Latest Games</li>
                   </Link>
-                  <Link to="">
+                  <Link to="/upcominggames">
                     <li className="p-4 nav-li-background rounded-b-lg">
                       Upcoming Games
                     </li>

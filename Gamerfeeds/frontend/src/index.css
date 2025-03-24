@@ -8,9 +8,9 @@
     --nav-hover-bg: #3b82f6;
     --dropdown-nav-bg: #3b82f6;
     --dropdown-nav-hover: #60a5fa;
-    --card-bg: #f3f4f6;
-    --filter-button: #d1d5db;
-    --filter-button-hover: #e5e7eb; 
+    --card-bg: #e5e7eb;
+    --filter-button: #d4d4d4;
+    --filter-button-hover: #7dd3fc; 
 }
 
 .dark {

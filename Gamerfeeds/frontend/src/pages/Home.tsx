@@ -32,7 +32,7 @@ export default function Home() {
     news,
     isNewsLoading,
     newsError,
-    fetchLatestNews,
+    fetchPaginatedNews,
     fetchNewsFromRandomSources,
   } = useNewsStore();
 
@@ -59,13 +59,13 @@ export default function Home() {
   const [secondSourceName, setSecondSourceName] = useState<string>("Latest");
 
   const CAROUSEL_ITEM_COUNT = 10;
-  const GAME_ITEM_COUNT = 9;
+  const GAME_ITEM_COUNT = 12;
   const SIDE_NEWS_COUNT = 5;
 
   // Fetch main news data
   useEffect(() => {
-    fetchLatestNews(CAROUSEL_ITEM_COUNT);
-  }, [fetchLatestNews]);
+    fetchPaginatedNews(1, CAROUSEL_ITEM_COUNT);
+  }, [fetchPaginatedNews]);
 
   // Fetch random source news for the two side panels
   useEffect(() => {
@@ -138,7 +138,7 @@ export default function Home() {
 
   // Fetch top games
   useEffect(() => {
-    fetchTopGames(GAME_ITEM_COUNT);
+    fetchTopGames(1, GAME_ITEM_COUNT);
   }, [fetchTopGames]);
 
   // Process top games when they change
@@ -167,7 +167,7 @@ export default function Home() {
 
   // Fetch latest games
   useEffect(() => {
-    fetchLatestGames(GAME_ITEM_COUNT);
+    fetchLatestGames(1, GAME_ITEM_COUNT);
   }, [fetchLatestGames]);
 
   // Process latest games when they change
@@ -227,7 +227,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex-col items-center justify-center mt-25 z-10 mx-auto max-w-6xl">
+    <div className="flex-col items-center justify-center mt-25 z-10 mx-auto max-w-7xl">
       {/* News Section */}
       <h1 className="font-[Black_Ops_One] text-3xl div-header pb-1 mb-5">
         Latest News
@@ -250,15 +250,15 @@ export default function Home() {
       </div>
 
       {/* Top Games and First Source News Section */}
-      <div className="flex flex-row justify-between">
+      <div className="flex flex-row justify-between gap-10">
         <div>
           <h1 className="font-[Black_Ops_One] text-3xl div-header pb-1 mt-10 mb-5">
             Top Games
           </h1>
-          <div className="grid grid-cols-3 grid-rows-3 gap-5 mb-5">
+          <div className="grid grid-cols-4 gap-5 mb-5">
             {topGamesData.length > 0 ? (
               topGamesData.map((game) => (
-                <div className="col-span-1 row-span-1" key={game.id}>
+                <div className="col-span-1 row-span-1 h-85 w-52" key={game.id}>
                   <Link to="" key={game.id}>
                     <GameCard
                       name={game.name}
@@ -277,13 +277,13 @@ export default function Home() {
           </div>
         </div>
         <div>
-          <h1 className="font-[Black_Ops_One] text-2xl div-header pb-1 mt-11 mb-5">
+          <h1 className="font-[Black_Ops_One] text-xl div-header pb-1 mt-12 mb-5">
             {firstSourceName} Latest
           </h1>
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4">
             {firstSourceNews.length > 0 ? (
               firstSourceNews.map((news) => (
-                <div key={news.id} className="w-95 h-50">
+                <div key={news.id}>
                   <Link to="" key={news.id}>
                     <NewsCard
                       id={news.id}
@@ -303,15 +303,15 @@ export default function Home() {
       </div>
 
       {/* Latest Games and Second Source News Section */}
-      <div className="flex flex-row mb-10 justify-between">
+      <div className="flex flex-row mb-10 justify-between gap-10">
         <div>
           <h1 className="font-[Black_Ops_One] text-3xl div-header mt-5 pb-1 mb-5">
             Latest Games
           </h1>
-          <div className="grid grid-cols-3 grid-rows-3 gap-5">
+          <div className="grid grid-cols-4 grid-rows-3 gap-5">
             {latestGamesData.length > 0 ? (
               latestGamesData.map((game) => (
-                <div className="col-span-1 row-span-1" key={game.id}>
+                <div className="col-span-1 row-span-1 h-85 w-52" key={game.id}>
                   <Link to="" key={game.id}>
                     <GameCard
                       name={game.name}
@@ -330,13 +330,13 @@ export default function Home() {
           </div>
         </div>
         <div>
-          <h1 className="font-[Black_Ops_One] text-2xl div-header pb-1 mt-6 mb-5">
+          <h1 className="font-[Black_Ops_One] text-xl div-header pb-1 mt-7 mb-5">
             {secondSourceName} Latest
           </h1>
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4">
             {secondSourceNews.length > 0 ? (
               secondSourceNews.map((news) => (
-                <div key={news.id} className="w-95 h-50">
+                <div key={news.id}>
                   <Link to="" key={news.id}>
                     <NewsCard
                       id={news.id}

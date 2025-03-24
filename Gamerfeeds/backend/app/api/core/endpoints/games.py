@@ -543,58 +543,9 @@ def get_games_with_pagination(page: int, perPage: int, db: Session, data_type: s
         }
     }
 
-
-# Helper function to get game data to avoid code repetition
-def get_games_by_data_type(db: Session, data_type: str, limit: int = None):
-    query = (select(Game)
-             .join(GameDataType, GameDataType.id == Game.data_type_id)
-             .options(selectinload(Game.platforms))
-             .options(selectinload(Game.developers))
-             .options(selectinload(Game.genres))
-             .options(selectinload(Game.languages))
-             .options(selectinload(Game.screenshots))
-             .options(selectinload(Game.videos))
-             .where(GameDataType.name == data_type)
-             )
-
-    if data_type == 'top':
-        query = query.order_by(desc(Game.rating))
-
-    if data_type == 'latest':
-        query = query.order_by(desc(Game.release_date))
-
-    if data_type == 'upcoming':
-        query = query.order_by(asc(Game.release_date))
-
-    if limit:
-        query = query.limit(limit=limit)
-
-    games = db.execute(query).scalars().all()
-
-    result = []
-    for game in games:
-        game_dict = {
-            'id': game.id,
-            'name': game.name,
-            'summary': game.summary,
-            'storyline': game.storyline,
-            'cover_image_url': game.cover_image_url,
-            'release_date': game.release_date,
-            'data_type': game.data_type.name,
-            'developers': [developer.name for developer in game.developers],
-            'platforms': [platform.name for platform in game.platforms],
-            'genres': [genre.name for genre in game.genres],
-            'languages': [language.name for language in game.languages],
-            'screenshots': [screenshot.screenshot_url for screenshot in game.screenshots],
-            'videos': [video.video_url for video in game.videos],
-            'rating': game.rating
-        }
-        result.append(game_dict)
-
-    return result
-
-
 # Helper function that gets the related objects to a game or create a new relation if needed
+
+
 def get_or_create_related_objects(db: Session, model_class: Any, items: List[str], unique_field='name'):
     result = []
 
