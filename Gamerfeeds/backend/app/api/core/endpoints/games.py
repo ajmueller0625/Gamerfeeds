@@ -1,11 +1,12 @@
+from datetime import datetime
 from typing import Any, List
-from fastapi import Depends, APIRouter, HTTPException, status
-from sqlalchemy import select, delete, desc, asc
+from fastapi import Depends, APIRouter, HTTPException, status, Query
+from sqlalchemy import func, select, delete, desc, asc
 from sqlalchemy.orm import Session, selectinload
 from app.api.db_setup import get_db
 
 from app.api.core.models import (
-    Game, GameDataType, Genre,
+    Game, GameDataType, GameDeveloper, GameGenre, GameLanguage, GamePlatform, Genre,
     Platform, Developer, Language,
     Screenshot, Video
 )
@@ -23,52 +24,48 @@ router = APIRouter(tags=['games'])
 
 
 @router.get('/games', status_code=status.HTTP_200_OK)
-def get_all_games(db: Session = Depends(get_db)):
-    query = (select(Game)
-             .join(GameDataType, GameDataType.id == Game.data_type_id)
-             .options(selectinload(Game.platforms))
-             .options(selectinload(Game.developers))
-             .options(selectinload(Game.genres))
-             .options(selectinload(Game.languages))
-             .options(selectinload(Game.screenshots))
-             .options(selectinload(Game.videos))
-             .order_by(desc(Game.rating))
-             )
+def get_all_games(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1, description='Page number'),
+    perPage: int = Query(10, ge=1, le=100, description='Items per page'),
+    developers: str = Query(
+        None, description='Filter for developer(s), comma-separated'),
+    platforms: str = Query(
+        None, description='Filter for platform(s), comma-separated'),
+    genres: str = Query(
+        None, description='Filter for genre(s), comma-separated'),
+    languages: str = Query(
+        None, description='Filter for language(s), comma-separated')
+):
 
-    games = db.scalars(query).all()
+    games = get_games_with_pagination(db=db, page=page, perPage=perPage, developers=developers,
+                                      platforms=platforms, genres=genres, languages=languages)
 
-    if not games:
+    if not games.items:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
 
-    all_games = []
-    for game in games:
-        game_dict = {
-            'id': game.id,
-            'name': game.name,
-            'summary': game.summary,
-            'storyline': game.storyline,
-            'cover_image_url': game.cover_image_url,
-            'release_date': game.release_date,
-            'data_type': game.data_type.name,
-            'developers': [developer.name for developer in game.developers],
-            'platforms': [platform.name for platform in game.platforms],
-            'genres': [genre.name for genre in game.genres],
-            'languages': [language.name for language in game.languages],
-            'screenshots': [screenshot.screenshot_url for screenshot in game.screenshots],
-            'videos': [video.video_url for video in game.videos],
-            'rating': game.rating
-        }
-        all_games.append(game_dict)
-
-    return all_games
+    return games
 
 
 @router.get('/games/topgames', status_code=status.HTTP_200_OK)
-def get_top_games(db: Session = Depends(get_db)):
-    top_games = get_games_by_data_type(db=db, data_type='top')
+def get_top_games(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1, description='Page number'),
+    perPage: int = Query(10, ge=1, le=100, description='Items per page'),
+    developers: str = Query(
+        None, description='Filter for developer(s), comma-separated'),
+    platforms: str = Query(
+        None, description='Filter for platform(s), comma-separated'),
+    genres: str = Query(
+        None, description='Filter for genre(s), comma-separated'),
+    languages: str = Query(
+        None, description='Filter for language(s), comma-separated')
+):
+    top_games = get_games_with_pagination(db=db, data_type='top', page=page, perPage=perPage,
+                                          developers=developers, platforms=platforms, genres=genres, languages=languages)
 
-    if not top_games:
+    if not top_games.items:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
 
@@ -76,10 +73,23 @@ def get_top_games(db: Session = Depends(get_db)):
 
 
 @router.get('/games/latestgames', status_code=status.HTTP_200_OK)
-def get_latest_games(db: Session = Depends(get_db)):
-    latest_games = get_games_by_data_type(db=db, data_type='latest')
+def get_latest_games(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1, description='Page number'),
+    perPage: int = Query(10, ge=1, le=100, description='Items per page'),
+    developers: str = Query(
+        None, description='Filter for developer(s), comma-separated'),
+    platforms: str = Query(
+        None, description='Filter for platform(s), comma-separated'),
+    genres: str = Query(
+        None, description='Filter for genre(s), comma-separated'),
+    languages: str = Query(
+        None, description='Filter for language(s), comma-separated')
+):
+    latest_games = get_games_with_pagination(db=db, data_type='latest', page=page, perPage=perPage,
+                                             developers=developers, platforms=platforms, genres=genres, languages=languages)
 
-    if not latest_games:
+    if not latest_games.items:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
 
@@ -87,8 +97,21 @@ def get_latest_games(db: Session = Depends(get_db)):
 
 
 @router.get('/games/upcominggames', status_code=status.HTTP_200_OK)
-def get_upcoming_games(db: Session = Depends(get_db)):
-    upcoming_games = get_games_by_data_type(db=db, data_type='upcoming')
+def get_upcoming_games(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1, description='Page number'),
+    perPage: int = Query(10, ge=1, le=100, description='Items per page'),
+    developers: str = Query(
+        None, description='Filter for developer(s), comma-separated'),
+    platforms: str = Query(
+        None, description='Filter for platform(s), comma-separated'),
+    genres: str = Query(
+        None, description='Filter for genre(s), comma-separated'),
+    languages: str = Query(
+        None, description='Filter for language(s), comma-separated')
+):
+    upcoming_games = get_games_with_pagination(db=db, data_type='upcoming', page=page, perPage=perPage,
+                                               developers=developers, platforms=platforms, genres=genres, languages=languages)
 
     if not upcoming_games:
         raise HTTPException(
@@ -417,39 +440,108 @@ def delete_game(id: int, db: Session = Depends(get_db)):
     return {'message': f'Game with id: {id} has been deleted'}
 
 
-@router.get('/games/topgames/{limit}', status_code=status.HTTP_200_OK)
-def get_top_games_with_limit(limit: int, db: Session = Depends(get_db)):
-    top_games = get_games_by_data_type(db=db, data_type='top', limit=limit)
+# Helper function to get game data with pagination to avoid code repetition
+def get_games_with_pagination(page: int, perPage: int, db: Session, data_type: str = None,  developers: str = None, platforms: str = None, genres: str = None, languages: str = None):
+    # Initial query
+    query = (select(Game)
+             .join(GameDataType, GameDataType.id == Game.data_type_id)
+             .options(selectinload(Game.platforms))
+             .options(selectinload(Game.developers))
+             .options(selectinload(Game.genres))
+             .options(selectinload(Game.languages))
+             .options(selectinload(Game.screenshots))
+             .options(selectinload(Game.videos)))
 
-    if not top_games:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
+    # Apply filters on many-to-many relationships if provided
+    if developers:
+        developer_names = [s.strip()
+                           for s in developers.split(',') if s.strip()]
+        query = (query
+                 .join(GameDeveloper, Game.id == GameDeveloper.game_id)
+                 .join(Developer, Developer.id == GameDeveloper.developer_id)
+                 .where(Developer.name.in_(developer_names)))
 
-    return top_games
+    if platforms:
+        platform_names = [s.strip() for s in platforms.split(',') if s.strip()]
+        query = (query
+                 .join(GamePlatform, Game.id == GamePlatform.game_id)
+                 .join(Platform, Platform.id == GamePlatform.platform_id)
+                 .where(Platform.name.in_(platform_names)))
 
+    if genres:
+        genre_names = [s.strip() for s in genres.split(',') if s.strip()]
+        query = (query
+                 .join(GameGenre, Game.id == GameGenre.game_id)
+                 .join(Genre, Genre.id == GameGenre.genre_id)
+                 .where(Genre.name.in_(genre_names)))
 
-@router.get('/games/latestgames/{limit}', status_code=status.HTTP_200_OK)
-def get_latest_games_limit(limit: int, db: Session = Depends(get_db)):
-    latest_games = get_games_by_data_type(
-        db=db, data_type='latest', limit=limit)
+    if languages:
+        language_names = [s.strip() for s in languages.split(',') if s.strip()]
+        query = (query
+                 .join(GameLanguage, Game.id == GameLanguage.game_id)
+                 .join(Language, Language.id == GameLanguage.language_id)
+                 .where(Language.name.in_(language_names)))
 
-    if not latest_games:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
+    # Ordered by data type
+    if data_type == 'top':
+        query = query.where(GameDataType.name ==
+                            data_type).order_by(desc(Game.rating))
 
-    return latest_games
+    if data_type == 'latest':
+        query = query.where(GameDataType.name == data_type).order_by(
+            desc(Game.release_date))
 
+    if data_type == 'upcoming':
+        query = query.where(GameDataType.name == data_type).order_by(
+            asc(Game.release_date))
 
-@router.get('/games/upcominggames/{limit}', status_code=status.HTTP_200_OK)
-def get_upcoming_games_limit(limit: int, db: Session = Depends(get_db)):
-    upcoming_games = get_games_by_data_type(
-        db=db, data_type='upcoming', limit=limit)
+    # If multiple filters, we need distinct to avoid duplicates
+    if any([developers, platforms, genres, languages]):
+        query = query.distinct()
 
-    if not upcoming_games:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail='No games found')
+    # Count total matching games
+    count_query = select(func.count()).select_from(query.subquery())
+    total_games = db.scalar(count_query)
 
-    return upcoming_games
+    # Calculate pagination values
+    total_pages = (total_games + perPage - 1) // perPage  # Ceiling division
+
+    # Apply pagination
+    offset_value = (page - 1) * perPage
+    query = query.offset(offset_value).limit(perPage)
+
+    # Execute and get games
+    games = db.execute(query).scalars().all()
+
+    result = []
+    for game in games:
+        game_dict = {
+            'id': game.id,
+            'name': game.name,
+            'summary': game.summary,
+            'storyline': game.storyline,
+            'cover_image_url': game.cover_image_url,
+            'release_date': game.release_date,
+            'data_type': game.data_type.name,
+            'developers': [developer.name for developer in game.developers],
+            'platforms': [platform.name for platform in game.platforms],
+            'genres': [genre.name for genre in game.genres],
+            'languages': [language.name for language in game.languages],
+            'screenshots': [screenshot.screenshot_url for screenshot in game.screenshots],
+            'videos': [video.video_url for video in game.videos],
+            'rating': game.rating
+        }
+        result.append(game_dict)
+
+    return {
+        'items': result,
+        'pagination': {
+            'page': page,
+            'perPage': perPage,
+            'total_items': total_games,
+            'total_pages': total_pages
+        }
+    }
 
 
 # Helper function to get game data to avoid code repetition

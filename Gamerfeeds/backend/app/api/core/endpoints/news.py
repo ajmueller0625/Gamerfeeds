@@ -19,14 +19,15 @@ router = APIRouter(tags=['news'])
 def get_all_news(
     db: Session = Depends(get_db),
     page: int = Query(1, ge=1, description='Page number'),
-    items_per_page: int = Query(
+    perPage: int = Query(
         10, ge=1, le=100, description='Number of items per page'),
-    source: str = Query(None, description='Filter by source'),
+    source: str = Query(
+        None, description='Filter by source(s), comma-separated'),
     published_date: str = Query(
         None, description='Filter by date: today, week, older')
 ):
     # Calculates pagination value
-    skip = (page - 1) * items_per_page
+    skip = (page - 1) * perPage
 
     # Base query with joins for both author and source_name
     query = select(News).options(
@@ -36,10 +37,14 @@ def get_all_news(
 
     # Apply source filter
     if source:
-        source_object = db.scalars(select(SourceName).where(
-            SourceName.name == source)).first()
-        if source_object:
-            query = query.where(News.source_id == source_object.id)
+        source_names = [s.strip() for s in source.split(',') if s.strip()]
+        if source_names:
+            source_objects = db.scalars(
+                select(SourceName).where(SourceName.name.in_(source_names))
+            ).all()
+            if source_objects:
+                source_ids = [s.id for s in source_objects]
+                query = query.where(News.source_id.in_(source_ids))
 
     # Apply published date filter
     if published_date:
@@ -65,7 +70,7 @@ def get_all_news(
     total_items = db.scalar(count_query)
 
     # Apply pagination to the ordered query
-    paginated_query = ordered_query.offset(skip).limit(items_per_page)
+    paginated_query = ordered_query.offset(skip).limit(perPage)
 
     # Execute the paginated query
     all_news = db.scalars(paginated_query).all()
@@ -89,13 +94,13 @@ def get_all_news(
         })
 
     # Calculate pagination metadata
-    total_pages = (total_items + items_per_page - 1) // items_per_page
+    total_pages = (total_items + perPage - 1) // perPage
 
     return {
         'items': result,
         'pagination': {
             'page': page,
-            'items_per_page': items_per_page,
+            'perPage': perPage,
             'total_items': total_items,
             'total_pages': total_pages
         }
@@ -201,31 +206,6 @@ def get_source_name_by_id(id: int, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail='No source found')
     return source_name
-
-
-@router.get('/news/latest/{limit}', status_code=status.HTTP_200_OK)
-def get_latest_news_with_limit(limit: int, db: Session = Depends(get_db)):
-    query = select(News).order_by(desc(News.published)).options(
-        selectinload(News.author)).options(selectinload(News.source_name)).limit(limit)
-    all_news = db.execute(query).scalars().all()
-    if not all_news:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail='No news found')
-    result = []
-    for news in all_news:
-        result.append({
-            'id': news.id,
-            'title': news.title,
-            'description': news.description,
-            'image_url': news.image_url,
-            'source_url': news.source_url,
-            'content': news.content,
-            'author': news.author.name,
-            'source_name': news.source_name.name,
-            'published': news.published
-        })
-
-    return result
 
 
 @router.get('/news/source/{source_name}/{limit}', status_code=status.HTTP_200_OK)
