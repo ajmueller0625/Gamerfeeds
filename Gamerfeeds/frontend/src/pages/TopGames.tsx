@@ -171,7 +171,7 @@ export default function TopGames() {
           <>
             <div className="grid grid-cols-4 gap-5">
               {topGames.map((game) => (
-                <Link to="" key={game.id} className="h-85">
+                <Link to={`/games/${game.id}`} key={game.id} className="h-85">
                   <GameCard
                     name={game.name}
                     cover_image_url={game.cover_image_url}

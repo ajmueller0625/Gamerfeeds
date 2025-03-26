@@ -10,6 +10,7 @@ export interface GameData {
     release_date: string;
     data_type: string;
     developers: string[] | null;
+    platforms: string[] | null;
     genres: string[] | null;
     languages: string[] | null;
     screenshots: string[] | null;
@@ -50,6 +51,7 @@ export interface LanguageData {
 }
 
 interface GameState {
+    game: GameData[];
     topGames: GameData[];
     latestGames: GameData[];
     upcomingGames: GameData[];
@@ -58,6 +60,7 @@ interface GameState {
     genres: GenreData[];
     languages: LanguageData[];
     pagination: PaginationData | null;
+    isGameLoading: boolean;
     isTopGamesLoading: boolean;
     isLatestGamesLoading: boolean;
     isUpcomingGamesLoading: boolean;
@@ -65,6 +68,7 @@ interface GameState {
     isPlatformsLoading: boolean;
     isGenresLoading: boolean;
     isLanguagesLoading: boolean;
+    gameError: string | null;
     topGamesError: string | null;
     latestGamesError: string | null;
     upcomingGamesError: string | null;
@@ -79,9 +83,11 @@ interface GameState {
     fetchPlatforms: () => Promise<void>;
     fetchGenres: () => Promise<void>;
     fetchLanguages: () => Promise<void>;
+    fetchGameByID: (id: number) => Promise<void>;
 }
 
 const useGameStore = create<GameState>((set) => ({
+    game: [],
     topGames: [],
     latestGames: [],
     upcomingGames: [],
@@ -90,6 +96,7 @@ const useGameStore = create<GameState>((set) => ({
     genres: [],
     languages: [],
     pagination: null,
+    isGameLoading: false,
     isTopGamesLoading: false,
     isLatestGamesLoading: false,
     isUpcomingGamesLoading: false,
@@ -97,6 +104,7 @@ const useGameStore = create<GameState>((set) => ({
     isPlatformsLoading: false,
     isGenresLoading: false,
     isLanguagesLoading: false,
+    gameError: null,
     topGamesError: null,
     latestGamesError: null,
     upcomingGamesError: null,
@@ -338,6 +346,22 @@ const useGameStore = create<GameState>((set) => ({
             set({ languagesError: (error as Error).message, isLanguagesLoading: false});
         }
     },
+    fetchGameByID: async (id: number) => {
+        try {
+            set({ isGameLoading: true, gameError: null });
+            const response = await fetch(`${API_URL}/games/${id}`);
+
+            if (!response.ok) {
+                throw Error(`Failed to fetch game with ID: ${id}`);
+            }
+
+            const data = await response.json();
+            set({ game: data, isGameLoading: false, gameError: null });
+
+        } catch (error) {
+            set({ gameError: (error as Error).message, isGameLoading: false });
+        }
+    }
 }));
 
 export default useGameStore;

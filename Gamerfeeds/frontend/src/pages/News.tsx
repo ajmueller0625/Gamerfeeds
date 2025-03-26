@@ -109,13 +109,15 @@ export default function News() {
           <>
             <div className="grid grid-cols-2 gap-5">
               {news.map((data) => (
-                <Link to="" key={data.id}>
-                  <NewsCard
-                    id={data.id}
-                    title={data.title}
-                    image_url={data.image_url}
-                  />
-                </Link>
+                <div className="h-65">
+                  <Link to={`/news/${data.id}`} key={data.id} className="h-80">
+                    <NewsCard
+                      id={data.id}
+                      title={data.title}
+                      image_url={data.image_url}
+                    />
+                  </Link>
+                </div>
               ))}
             </div>
 

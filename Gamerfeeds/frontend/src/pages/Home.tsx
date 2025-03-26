@@ -237,8 +237,8 @@ export default function Home() {
           <NewsCarousel carouseldata={carouselData} />
         </div>
         {cardData.map((card) => (
-          <div className="col-span-1 row-span-1" key={card.id}>
-            <Link to="" key={card.id}>
+          <div className="col-span-1 row-span-1 h-50" key={card.id}>
+            <Link to={`/news/${card.id}`} key={card.id}>
               <NewsCard
                 id={card.id}
                 image_url={card.image_url}
@@ -259,7 +259,7 @@ export default function Home() {
             {topGamesData.length > 0 ? (
               topGamesData.map((game) => (
                 <div className="col-span-1 row-span-1 h-85 w-52" key={game.id}>
-                  <Link to="" key={game.id}>
+                  <Link to={`/games/${game.id}`} key={game.id}>
                     <GameCard
                       name={game.name}
                       cover_image_url={game.cover_image_url}
@@ -283,8 +283,8 @@ export default function Home() {
           <div className="flex flex-col gap-4">
             {firstSourceNews.length > 0 ? (
               firstSourceNews.map((news) => (
-                <div key={news.id}>
-                  <Link to="" key={news.id}>
+                <div key={news.id} className="h-50">
+                  <Link to={`/news/${news.id}`} key={news.id}>
                     <NewsCard
                       id={news.id}
                       image_url={news.image_url}
@@ -312,7 +312,7 @@ export default function Home() {
             {latestGamesData.length > 0 ? (
               latestGamesData.map((game) => (
                 <div className="col-span-1 row-span-1 h-85 w-52" key={game.id}>
-                  <Link to="" key={game.id}>
+                  <Link to={`/games/${game.id}`} key={game.id}>
                     <GameCard
                       name={game.name}
                       cover_image_url={game.cover_image_url}
@@ -336,8 +336,8 @@ export default function Home() {
           <div className="flex flex-col gap-4">
             {secondSourceNews.length > 0 ? (
               secondSourceNews.map((news) => (
-                <div key={news.id}>
-                  <Link to="" key={news.id}>
+                <div key={news.id} className="h-50">
+                  <Link to={`/news/${news.id}`} key={news.id}>
                     <NewsCard
                       id={news.id}
                       image_url={news.image_url}

@@ -122,7 +122,8 @@ def get_upcoming_games(
 
 @router.get('/games/developers', status_code=status.HTTP_200_OK)
 def get_all_developers(db: Session = Depends(get_db)):
-    all_developers = db.scalars(select(Developer)).all()
+    all_developers = db.scalars(
+        select(Developer).order_by(Developer.name)).all()
     if not all_developers:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail='No developers found')
@@ -132,7 +133,7 @@ def get_all_developers(db: Session = Depends(get_db)):
 
 @router.get('/games/platforms', status_code=status.HTTP_200_OK)
 def get_all_platforms(db: Session = Depends(get_db)):
-    all_platforms = db.scalars(select(Platform)).all()
+    all_platforms = db.scalars(select(Platform).order_by(Platform.name)).all()
     if not all_platforms:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail='No platforms found')
@@ -142,7 +143,7 @@ def get_all_platforms(db: Session = Depends(get_db)):
 
 @router.get('/games/languages', status_code=status.HTTP_200_OK)
 def get_all_languages(db: Session = Depends(get_db)):
-    all_languages = db.scalars(select(Language)).all()
+    all_languages = db.scalars(select(Language).order_by(Language.name)).all()
     if not all_languages:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail='No languages found')
@@ -152,7 +153,7 @@ def get_all_languages(db: Session = Depends(get_db)):
 
 @router.get('/games/genres', status_code=status.HTTP_200_OK)
 def get_all_genres(db: Session = Depends(get_db)):
-    all_genres = db.scalars(select(Genre)).all()
+    all_genres = db.scalars(select(Genre).order_by(Genre.name)).all()
     if not all_genres:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail='No genres found')
@@ -222,7 +223,7 @@ def add_game(game: GameSchema, db: Session = Depends(get_db)):
 
     if game.videos:
         new_game.videos = get_or_create_related_objects(
-            db, Video, game.videos, unique_field='video_url')
+            db, Video, game.videos, unique_field='video_url_id')
 
     db.add(new_game)
     db.commit()
@@ -310,7 +311,7 @@ def add_screenshot(screenshot: ScreenshotSchema, db: Session = Depends(get_db)):
 @router.post('/games/videos', status_code=status.HTTP_201_CREATED, response_model=VideoResponseSchema)
 def add_video(video: VideoSchema, db: Session = Depends(get_db)):
     exist_video = db.scalars(select(Video).where(
-        Video.video_url == video.video_url)).one_or_none()
+        Video.video_url_id == video.video_url_id)).one_or_none()
 
     if exist_video:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
@@ -354,7 +355,7 @@ def get_game_by_id(id: int, db: Session = Depends(get_db)):
         'genres': [genre.name for genre in game.genres],
         'languages': [language.name for language in game.languages],
         'screenshots': [screenshot.screenshot_url for screenshot in game.screenshots],
-        'videos': [video.video_url for video in game.videos],
+        'videos': [video.video_url_id for video in game.videos],
         'rating': game.rating
     }]
 
@@ -418,7 +419,7 @@ def update_game(id: int, game_update: GameSchema, db: Session = Depends(get_db))
 
     if game_update.videos:
         exist_game.videos = get_or_create_related_objects(
-            db, Video, game_update.videos, unique_field='video_url')
+            db, Video, game_update.videos, unique_field='video_url_id')
 
     db.add(exist_game)
     db.commit()
@@ -528,7 +529,7 @@ def get_games_with_pagination(page: int, perPage: int, db: Session, data_type: s
             'genres': [genre.name for genre in game.genres],
             'languages': [language.name for language in game.languages],
             'screenshots': [screenshot.screenshot_url for screenshot in game.screenshots],
-            'videos': [video.video_url for video in game.videos],
+            'videos': [video.video_url_id for video in game.videos],
             'rating': game.rating
         }
         result.append(game_dict)

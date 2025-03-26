@@ -105,7 +105,7 @@ export default function NewsCarousel({ carouseldata }: CarouselProps) {
             alt={`Slide: ${carouseldata[currentIndex].title}`}
             className="absolute w-full h-full object-cover"
           />
-          <Link to="">
+          <Link to={`/news/${carouseldata[currentIndex].id}`}>
             <div
               className="font-[Hubot_Sans] absolute start-0 bottom-0 w-full px-10 pt-5 pb-7
                  bg-neutral-900/50 hover:bg-neutral-800/50 text-white"

@@ -53,6 +53,7 @@ interface NewsState {
     fetchNewsFromRandomSources: (limit: number) => Promise<RandomSourceNews>;
     fetchAllSources: () => Promise<void>;
     fetchPaginatedNews: (page: number, perPage: number, source?: string, published?: string) => Promise<void>;
+    fetchNewsByID: (id: number) => Promise<void>;
 }
 
 const useNewsStore = create<NewsState>((set) =>({
@@ -202,6 +203,22 @@ const useNewsStore = create<NewsState>((set) =>({
         } catch(error) {
             set({ newsError: (error as Error).message, isNewsLoading: false });
         }
+    },
+    fetchNewsByID: async (id: number) => {
+        try {
+            set({ isNewsLoading: true, newsError: null });
+            const response = await fetch(`${API_URL}/news/${id}`);
+
+            if (!response.ok) {
+                throw Error(`Failed to fetch news with id ${id}`);
+            }
+
+            const data = await response.json();
+            set({news: data, isNewsLoading: false, newsError: null});
+        
+        } catch (error) {
+            set({newsError: (error as Error).message, isNewsLoading: false});
+        } 
     },
 }));
 

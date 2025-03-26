@@ -8,6 +8,8 @@ import News from "./pages/News";
 import TopGames from "./pages/TopGames";
 import LatestGames from "./pages/LatestGames";
 import UpcomingGames from "./pages/UpcomingGames";
+import NewsArticle from "./pages/NewsArticle";
+import GameDetail from "./pages/GameDetail";
 
 const router = createBrowserRouter([
   {
@@ -33,6 +35,14 @@ const router = createBrowserRouter([
       {
         path: "/upcominggames",
         element: <UpcomingGames />,
+      },
+      {
+        path: "/news/:newsID",
+        element: <NewsArticle />,
+      },
+      {
+        path: "/games/:gameID",
+        element: <GameDetail />,
       },
     ],
   },

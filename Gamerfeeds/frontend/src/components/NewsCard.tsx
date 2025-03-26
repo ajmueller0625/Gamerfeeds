@@ -6,7 +6,7 @@ interface CardData {
 
 export default function NewsCard({ id, image_url, title }: CardData) {
   return (
-    <div className="rounded-md relative h-50 transition-all duration-300 transform hover:scale-105 text-white">
+    <div className="rounded-md relative w-full h-full transition-all duration-300 transform hover:scale-105 text-white">
       <img
         src={image_url}
         alt={`Card Image ${id}`}

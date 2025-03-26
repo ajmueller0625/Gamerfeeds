@@ -168,7 +168,8 @@ def add_author(author: AuthorSchema, db: Session = Depends(get_db)):
 
 @router.get('/news/sources/names', status_code=status.HTTP_200_OK)
 def get_all_source_names(db: Session = Depends(get_db)):
-    all_sources_names = db.scalars(select(SourceName)).all()
+    all_sources_names = db.scalars(
+        select(SourceName).order_by(SourceName.name)).all()
     if not all_sources_names:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail='No sources found')
@@ -187,6 +188,30 @@ def add_source_name(source_name: SourceNameSchema, db: Session = Depends(get_db)
     db.commit()
 
     return new_source_name
+
+
+@router.get('/news/{id}', status_code=status.HTTP_200_OK)
+def get_news_by_id(id: int, db: Session = Depends(get_db)):
+    news = db.scalar(select(News).options(selectinload(
+        News.author), selectinload(News.source_name)).where(News.id == id))
+
+    if not news:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='News not found')
+
+    return [
+        {
+            'id': news.id,
+            'title': news.title,
+            'description': news.description,
+            'image_url': news.image_url,
+            'source_url': news.source_url,
+            'content': news.content,
+            'author': news.author.name,
+            'source_name': news.source_name.name,
+            'published': news.published
+        }
+    ]
 
 
 @router.get('/news/authors/{id}', status_code=status.HTTP_200_OK, response_model=AuthorResponseSchema)

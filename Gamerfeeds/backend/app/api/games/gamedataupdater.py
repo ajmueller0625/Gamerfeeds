@@ -232,7 +232,7 @@ def update_exist_top_game(game: Dict[str, Any], db: Session) -> None:
         exist_game.screenshots = get_all_data(
             game.get('screenshots', []), Screenshot, db, 'screenshot_url')
         exist_game.videos = get_all_data(
-            game.get('videos', []), Video, db, 'video_url')
+            game.get('videos', []), Video, db, 'video_url_id')
 
         db.add(exist_game)
 
@@ -343,7 +343,7 @@ async def batch_save_games(games: List[Dict[str, Any]], batch_size: int = 10) ->
                     screenshots = get_all_data(
                         game.get('screenshots'), Screenshot, db, 'screenshot_url')
                     videos = get_all_data(
-                        game.get('videos'), Video, db, 'video_url')
+                        game.get('videos'), Video, db, 'video_url_id')
 
                     new_game = Game(
                         name=game.get('name'),

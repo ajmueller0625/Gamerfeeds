@@ -216,7 +216,7 @@ class Video(Base):
     __tablename__ = 'videos'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    video_url: Mapped[str] = mapped_column(
+    video_url_id: Mapped[str] = mapped_column(
         String(255), nullable=False, unique=True)
 
     # Relationships

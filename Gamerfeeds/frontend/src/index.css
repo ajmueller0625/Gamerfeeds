@@ -10,7 +10,8 @@
     --dropdown-nav-hover: #60a5fa;
     --card-bg: #e5e7eb;
     --filter-button: #d4d4d4;
-    --filter-button-hover: #7dd3fc; 
+    --filter-button-hover: #7dd3fc;
+    --carousel-bg: #ffffff;
 }
 
 .dark {
@@ -25,6 +26,8 @@
     --card-bg: #292524;
     --filter-button: #404040;
     --filter-button-hover:#525252;
+    --carousel-bg: #000000;
+
 }
 
 body {
@@ -79,4 +82,8 @@ footer {
 }
 .filter-button:hover {
     background-color: var(--filter-button-hover);
+}
+
+.carousel-background {
+    background-color: var(--color-background);
 }

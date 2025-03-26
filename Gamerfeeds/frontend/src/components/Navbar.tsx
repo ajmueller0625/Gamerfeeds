@@ -2,6 +2,7 @@ import { ChevronDown, ChevronUp, Moon, Search, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useThemeStore } from "../store/themeStore";
+import logo from "../assets/logo.png";
 
 export default function Navbar() {
   const [isGameDropdownActive, setGameDropdownState] = useState(false);
@@ -20,7 +21,7 @@ export default function Navbar() {
       <nav className="flex items-center justify-between max-w-7xl mx-auto py-4 space-x-15">
         <div className="flex items-center space-x-6 font-semibold">
           <Link to="/">
-            <img src="src/assets/logo.png" alt="Site Logo" className="h-10" />
+            <img src={logo} alt="Site Logo" className="h-10" />
           </Link>
           <div className="relative">
             <Search className="absolute text-neutral-600 right-3 top-1/2 transform -translate-y-1/2" />

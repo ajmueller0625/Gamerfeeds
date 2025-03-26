@@ -212,7 +212,7 @@ class GameDataHandler:
         for video in videos:
             video_id = video.get('video_id', '')
             if video_id:
-                result.append(f'https://www.youtube.com/watch?v={video_id}')
+                result.append(video_id)
 
         return result if result else None
 
