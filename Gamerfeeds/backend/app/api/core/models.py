@@ -93,11 +93,13 @@ class Game(Base):
     genres: Mapped[List['Genre']] = relationship(
         secondary='game_genres', back_populates='games')
     languages: Mapped[List['Language']] = relationship(
-        secondary='game_languages', back_populates='games')
+        secondary='game_languages', back_populates='languages')
     screenshots: Mapped[List['Screenshot']] = relationship(
         secondary='game_screenshots', back_populates='games')
     videos: Mapped[List['Video']] = relationship(
         secondary='game_videos', back_populates='games')
+    events: Mapped[List['Event']] = relationship(
+        secondary='event_games', back_populates='games')
 
 
 class GameDataType(Base):
@@ -109,6 +111,7 @@ class GameDataType(Base):
 
     # Relationships
     games: Mapped[List['Game']] = relationship(back_populates='data_type')
+    events: Mapped[List['Event']] = relationship(back_populates='data_type')
 
 
 class Platform(Base):
@@ -222,6 +225,8 @@ class Video(Base):
     # Relationships
     games: Mapped[List['Game']] = relationship(
         secondary='game_videos', back_populates='videos')
+    events: Mapped[List['Event']] = relationship(
+        secondary='event_videos', back_populates='videos')
 
 
 class GameVideo(Base):
@@ -231,3 +236,45 @@ class GameVideo(Base):
         'games.id', ondelete='CASCADE'), primary_key=True)
     video_id: Mapped[int] = mapped_column(ForeignKey(
         'videos.id', ondelete='CASCADE'), primary_key=True)
+
+
+class Event(Base):
+    __tablename__ = 'events'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
+    cover_image_url: Mapped[str] = mapped_column(String(255), nullable=True)
+    start_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    end_date: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    website_url: Mapped[str] = mapped_column(String(255), nullable=True)
+    location: Mapped[str] = mapped_column(String(255), nullable=True)
+    event_type: Mapped[str] = mapped_column(String(100), nullable=True)
+
+    # Relationships
+    data_type: Mapped['GameDataType'] = relationship(back_populates='events')
+    data_type_id: Mapped[int] = mapped_column(
+        ForeignKey('game_data_types.id', ondelete='SET NULL'), nullable=False)
+
+    games: Mapped[List['Game']] = relationship(
+        secondary='event_games', back_populates='events')
+    videos: Mapped[List['Video']] = relationship(
+        secondary='event_videos', back_populates='events')
+
+
+class EventGame(Base):
+    __tablename__ = 'event_games'
+
+    event_id: Mapped[int] = mapped_column(
+        ForeignKey('events.id', ondelete='CASCADE'), primary_key=True)
+    game_id: Mapped[int] = mapped_column(
+        ForeignKey('games.id', ondelete='CASCADE'), primary_key=True)
+
+
+class EventVideo(Base):
+    __tablename__ = 'event_videos'
+
+    event_id: Mapped[int] = mapped_column(
+        ForeignKey('events.id', ondelete='CASCADE'), primary_key=True)
+    video_id: Mapped[int] = mapped_column(
+        ForeignKey('videos.id', ondelete='CASCADE'), primary_key=True)

@@ -496,9 +496,8 @@ def get_games_with_pagination(page: int, perPage: int, db: Session, data_type: s
         query = query.where(GameDataType.name == data_type).order_by(
             asc(Game.release_date))
 
-    # If multiple filters, we need distinct to avoid duplicates
-    if any([developers, platforms, genres, languages]):
-        query = query.distinct()
+    # We need distinct to avoid duplicates
+    query = query.distinct()
 
     # Count total matching games
     count_query = select(func.count()).select_from(query.subquery())

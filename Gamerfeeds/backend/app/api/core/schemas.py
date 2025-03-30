@@ -148,3 +148,34 @@ class GameResponseSchema(BaseModel):
     rating: float | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class EventSchema(BaseModel):
+    name: str = Field(..., min_length=3, max_length=255)
+    description: str | None = None
+    cover_image_url: str | None = Field(None, max_length=255)
+    start_date: datetime
+    end_date: datetime | None = None
+    website_url: str | None = Field(None, max_length=255)
+    location: str | None = Field(None, max_length=255)
+    event_type: str | None = Field(None, max_length=100)
+    data_type: str
+    games: List[int] | None = []
+    videos: List[str] | None = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EventResponseSchema(BaseModel):
+    id: int
+    name: str
+    description: str | None = None
+    cover_image_url: str | None = None
+    start_date: datetime
+    end_date: datetime | None = None
+    website_url: str | None = None
+    location: str | None = None
+    event_type: str | None = None
+    data_type_id: int
+
+    model_config = ConfigDict(from_attributes=True)

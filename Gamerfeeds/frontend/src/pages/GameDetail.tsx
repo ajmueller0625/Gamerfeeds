@@ -132,13 +132,13 @@ export default function GameDetail() {
                   currentGame.developers.map((developer, index) => (
                     <span
                       key={index}
-                      className="text-xs filter-button rounded-lg p-1"
+                      className="text-sm bg-small-card rounded-lg p-1"
                     >
                       {developer}
                     </span>
                   ))
                 ) : (
-                  <span className="text-xs">N/A</span>
+                  <span className="text-sm">N/A</span>
                 )}
               </div>
             </div>
@@ -152,13 +152,13 @@ export default function GameDetail() {
                   currentGame.genres.map((genre, index) => (
                     <span
                       key={index}
-                      className="text-xs filter-button rounded-lg p-1"
+                      className="text-sm bg-small-card rounded-lg p-1"
                     >
                       {genre}
                     </span>
                   ))
                 ) : (
-                  <span className="text-xs">N/A</span>
+                  <span className="text-sm">N/A</span>
                 )}
               </div>
             </div>
@@ -213,7 +213,7 @@ export default function GameDetail() {
                     currentGame.languages.map((language, index) => (
                       <span
                         key={index}
-                        className="text-xs filter-button rounded-lg p-1"
+                        className="text-xs bg-small-card rounded-lg p-1"
                       >
                         {language}
                       </span>
@@ -234,7 +234,7 @@ export default function GameDetail() {
                     currentGame.platforms.map((platform, index) => (
                       <span
                         key={index}
-                        className="text-xs filter-button rounded-lg p-1"
+                        className="text-xs bg-small-card rounded-lg p-1"
                       >
                         {platform}
                       </span>

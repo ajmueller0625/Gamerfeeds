@@ -87,3 +87,6 @@ footer {
 .carousel-background {
     background-color: var(--color-background);
 }
+.bg-small-card {
+    background-color: var(--filter-button);
+}
