@@ -75,9 +75,9 @@ class Game(Base):
     summary: Mapped[str] = mapped_column(Text, nullable=True)
     storyline: Mapped[str] = mapped_column(Text, nullable=True)
     cover_image_url: Mapped[str] = mapped_column(
-        String(255), nullable=True)
+        String(255), nullable=False)
     release_date: Mapped[datetime] = mapped_column(
-        DateTime, nullable=True)
+        DateTime, nullable=False)
     rating: Mapped[float] = mapped_column(Float, nullable=True)
 
     # Relationships

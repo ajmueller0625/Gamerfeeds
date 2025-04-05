@@ -12,10 +12,7 @@ export default function NewsCard({ id, image_url, title }: CardData) {
         alt={`Card Image ${id}`}
         className="object-cover w-full h-full rounded-lg"
       />
-      <div
-        className="absolute bottom-0 left-0 w-full px-3 py-2 bg-neutral-900/50 
-               font-[Hubot_Sans] rounded-b-lg"
-      >
+      <div className="absolute bottom-0 left-0 w-full px-3 py-2 bg-neutral-900/50 rounded-b-lg">
         <h3 className="font-bold">{title}</h3>
       </div>
     </div>

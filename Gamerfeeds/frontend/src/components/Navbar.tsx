@@ -1,12 +1,36 @@
-import { ChevronDown, ChevronUp, Moon, Search, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { ChevronDown, ChevronUp, Moon, Search, Sun, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useThemeStore } from "../store/themeStore";
+import useSearchStore from "../store/searchStore";
 import logo from "../assets/logo.png";
+import SearchDropdown from "./SearchDropdown";
 
 export default function Navbar() {
   const [isGameDropdownActive, setGameDropdownState] = useState(false);
+  const [isSearchDropdownVisible, setSearchDropdownVisible] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [searchTimer, setSearchTimer] = useState<number | null>(null);
+  const location = useLocation();
+  const isSearchPage = location.pathname === "/search";
+
   const { isDarkMode, toggleTheme } = useThemeStore();
+  const {
+    query,
+    setQuery,
+    setDebouncedQuery,
+    searchContent,
+    clearSearch,
+    quickSearch,
+    quickResults,
+    isQuickSearching,
+    quickSearchError,
+    clearQuickSearch,
+  } = useSearchStore();
+
+  const searchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isDarkMode) {
@@ -16,29 +40,187 @@ export default function Navbar() {
     }
   }, [isDarkMode]);
 
+  // Effect for real-time search with debouncing
+  useEffect(() => {
+    // Clear previous timer
+    if (searchTimer !== null) {
+      window.clearTimeout(searchTimer);
+    }
+
+    if (query.trim().length >= 2) {
+      // Set dropdown visibility only when search is focused and not on search page
+      setSearchDropdownVisible(isSearchFocused && !isSearchPage);
+
+      // Quick search for dropdown
+      quickSearch(query);
+
+      // Debounced query update for search page
+      const timer = window.setTimeout(() => {
+        setDebouncedQuery(query);
+
+        // If on search page, update URL and trigger search
+        if (isSearchPage) {
+          const searchParams = new URLSearchParams(location.search);
+          searchParams.set("q", query);
+          searchParams.set("page", "1");
+          navigate(`${location.pathname}?${searchParams.toString()}`, {
+            replace: true,
+          });
+          searchContent(1, 15);
+        }
+      }, 300);
+
+      setSearchTimer(timer);
+    } else {
+      clearQuickSearch();
+      setSearchDropdownVisible(false);
+
+      // Clear search results if query is empty
+      if (query.trim() === "") {
+        setDebouncedQuery("");
+        if (isSearchPage) {
+          clearSearch();
+        }
+      }
+    }
+
+    // Cleanup timer on unmount
+    return () => {
+      if (searchTimer !== null) {
+        window.clearTimeout(searchTimer);
+      }
+    };
+  }, [query, isSearchPage, isSearchFocused]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
+        setSearchDropdownVisible(false);
+        setIsSearchFocused(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (query.trim()) {
+      setDebouncedQuery(query);
+
+      // Get current search parameters to preserve the current type
+      const searchParams = new URLSearchParams(location.search);
+      const currentType = searchParams.get("type") || "games";
+
+      // Navigate with the current search type preserved
+      navigate(
+        `/search?q=${encodeURIComponent(query)}&type=${currentType}&page=1`
+      );
+      setSearchDropdownVisible(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch(e);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setQuery("");
+    setDebouncedQuery("");
+    clearSearch();
+    clearQuickSearch();
+    setSearchDropdownVisible(false);
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+      setIsSearchFocused(true);
+    }
+  };
+
+  const handleCloseDropdown = () => {
+    setSearchDropdownVisible(false);
+  };
+
   return (
     <header className="w-screen fixed top-0 z-50">
       <nav className="flex items-center justify-between max-w-7xl mx-auto py-4 space-x-15">
-        <div className="flex items-center space-x-6 font-semibold">
+        <div className="flex items-center space-x-5 font-semibold">
           <Link to="/">
             <img src={logo} alt="Site Logo" className="h-10" />
           </Link>
-          <div className="relative">
-            <Search className="absolute text-neutral-600 right-3 top-1/2 transform -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search"
-              className="px-3 py-1 rounded-lg bg-white text-black focus:outline-none"
-            />
+          <div className="relative" ref={searchRef}>
+            <div className="flex items-center relative">
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search games or news..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onFocus={() => {
+                  setIsSearchFocused(true);
+                  if (query.trim().length >= 2 && !isSearchPage) {
+                    setSearchDropdownVisible(true);
+                  }
+                }}
+                onBlur={(e) => {
+                  // Only blur if we're not clicking inside the dropdown
+                  if (
+                    !e.relatedTarget ||
+                    !searchRef.current?.contains(e.relatedTarget as Node)
+                  ) {
+                    // We delay this slightly to allow for clicks within the dropdown
+                    setTimeout(() => {
+                      if (document.activeElement !== searchInputRef.current) {
+                        setIsSearchFocused(false);
+                      }
+                    }, 100);
+                  }
+                }}
+                className="px-3 py-2 pl-4 pr-10 rounded-lg bg-white text-black focus:outline-none min-w-[250px]"
+              />
+              {query ? (
+                <X
+                  className="absolute text-neutral-600 right-10 top-1/2 transform -translate-y-1/2 cursor-pointer h-4 w-4"
+                  onClick={handleClearSearch}
+                />
+              ) : null}
+              <button
+                onClick={handleSearch}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2"
+              >
+                <Search className="text-neutral-600" />
+              </button>
+            </div>
+
+            {/* Real-time search dropdown - only show when not on search page AND input is focused */}
+            {isSearchDropdownVisible &&
+              query.trim().length >= 2 &&
+              !isSearchPage && (
+                <SearchDropdown
+                  results={quickResults}
+                  isLoading={isQuickSearching}
+                  error={quickSearchError}
+                  onClose={handleCloseDropdown}
+                />
+              )}
           </div>
         </div>
         <nav>
           <ul className="font-[Black_Ops_One] flex">
             <Link to="/">
-              <li className="py-2 px-6 rounded-lg nav-hover-color">Home</li>
+              <li className="py-2 px-4 rounded-lg nav-hover-color">Home</li>
             </Link>
             <Link to="/news">
-              <li className="py-2 px-6 rounded-lg nav-hover-color">News</li>
+              <li className="py-2 px-4 rounded-lg nav-hover-color">News</li>
             </Link>
             <li
               className={
@@ -56,7 +238,7 @@ export default function Navbar() {
                 )}
               </button>
               {isGameDropdownActive && (
-                <ul className="absolute rounded-b-lg rounded-tr-lg nav-ul-background shadow-md shadow-neutral-950/50">
+                <ul className="absolute rounded-b-lg rounded-tr-lg nav-ul-background">
                   <Link to="/topgames">
                     <li className="p-4 nav-li-background rounded-tr-lg">
                       Top Games

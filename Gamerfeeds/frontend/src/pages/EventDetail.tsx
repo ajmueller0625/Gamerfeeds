@@ -92,7 +92,11 @@ export default function EventDetail() {
   };
 
   if (isEventLoading) {
-    return <div className="text-white text-center p-5">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center py-12 min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 spinner-color"></div>
+      </div>
+    );
   }
 
   if (eventError) {
@@ -120,7 +124,7 @@ export default function EventDetail() {
         Event Details
       </h1>
       <div className="rounded-lg card-background">
-        <h1 className="font-[Hubot_Sans] text-2xl font-semibold p-3 text-center">
+        <h1 className="text-2xl font-semibold p-3 text-center">
           {event?.name}
         </h1>
       </div>
@@ -130,14 +134,14 @@ export default function EventDetail() {
           <div className="col-span-5 row-span-full">
             <iframe
               src={getEmbedUrl(event.live_stream_url)}
-              className="w-full h-134 min-h-64 object-contain rounded-lg"
+              className="w-full h-139 min-h-64 object-contain rounded-lg"
               title="Live Stream"
               allowFullScreen
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             />
           </div>
         ) : (
-          <div className="col-span-5 h-134">
+          <div className="col-span-5 h-139">
             <img
               src={event?.logo_url}
               alt={`Event ${event?.id} logo`}
@@ -160,7 +164,7 @@ export default function EventDetail() {
           )}
 
           {/* Description section */}
-          <div className="p-3 card-background font-[Hubot_Sans] rounded-lg">
+          <div className="p-3 card-background rounded-lg">
             <h3 className="text-base font-semibold">Description</h3>
             {event?.description ? (
               <p className="text-sm p-1">{event.description}</p>
@@ -171,7 +175,7 @@ export default function EventDetail() {
 
           {/* Time sections in a single row */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="card-background rounded-lg font-[Hubot_Sans] p-3">
+            <div className="card-background rounded-lg p-3">
               <h3 className="text-base font-semibold">Start Time</h3>
               <p className="p-1 text-sm">
                 {event?.start_time
@@ -179,7 +183,7 @@ export default function EventDetail() {
                   : "Not specified"}
               </p>
             </div>
-            <div className="card-background rounded-lg font-[Hubot_Sans] p-3">
+            <div className="card-background rounded-lg p-3">
               <h3 className="text-base font-semibold">End Time</h3>
               <p className="p-1 text-sm">
                 {event?.end_time

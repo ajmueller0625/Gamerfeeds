@@ -19,7 +19,11 @@ export default function NewsArticle() {
   }, [fetchNewsByID]);
 
   if (isNewsLoading) {
-    return <div className="text-white text-center p-5">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center py-12 min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 spinner-color"></div>
+      </div>
+    );
   }
 
   if (newsError) {
@@ -43,7 +47,7 @@ export default function NewsArticle() {
       <h1 className="text-3xl font-[Black_Ops_One] div-header mb-5">
         News Article
       </h1>
-      <div className="font-[Hubot_Sans] flex flex-col gap-5 p-5 mb-10 max-w-6xl mx-auto">
+      <div className="flex flex-col gap-5 p-5 mb-10 max-w-6xl mx-auto">
         <div className="p-5 rounded-lg card-background space-y-2">
           <h2 className="text-3xl font-bold text-center">{newsData.title}</h2>
           {newsData.description && (

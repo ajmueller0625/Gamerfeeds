@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Hubot+Sans:wdth,wght@87.5,200..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -12,6 +12,8 @@
     --filter-button: #d4d4d4;
     --filter-button-hover: #7dd3fc;
     --carousel-bg: #ffffff;
+    --search-btn: #60a5fa;
+    --spinner-color: #60a5fa;
 }
 
 .dark {
@@ -27,7 +29,8 @@
     --filter-button: #404040;
     --filter-button-hover:#525252;
     --carousel-bg: #000000;
-
+    --search-btn: #404040;
+    --spinner-color: #ef4444;
 }
 
 body {
@@ -89,4 +92,37 @@ footer {
 }
 .bg-small-card {
     background-color: var(--filter-button);
+}
+.search-option {
+    background-color: var(--search-btn);
+    opacity: 50%;
+}
+
+.search-option-active {
+    background-color: var(--search-btn);
+    opacity: 100%;
+}
+
+.search-dropdown {
+    background-color: var(--dropdown-nav-bg);
+}
+
+.search-dropdown:hover {
+    background-color: var(--dropdown-nav-hover);
+}
+
+.search-dropdown-border {
+    border-bottom: 1px solid var(--dropdown-nav-hover);
+}
+
+.search-dropdown, .search-option, .search-option-active {
+    transition: all 0.2s ease-in-out;
+}
+
+.search-results-container {
+    transition: opacity 0.2s ease-in-out;
+}
+
+.spinner-color {
+    border-color: var(--spinner-color);
 }

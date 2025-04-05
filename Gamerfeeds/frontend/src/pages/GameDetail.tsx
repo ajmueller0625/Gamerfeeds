@@ -69,7 +69,11 @@ export default function GameDetail() {
   }, [fetchGameByID, gameID]);
 
   if (isGameLoading) {
-    return <div className="text-white text-center p-5">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center py-12 min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 spinner-color"></div>
+      </div>
+    );
   }
 
   if (gameError) {
@@ -108,22 +112,18 @@ export default function GameDetail() {
           </div>
 
           {/* Game Title under cover */}
-          <h2 className="font-[Hubot_Sans] text-xl font-bold mb-3">
-            {currentGame.name}
-          </h2>
+          <h2 className="text-xl font-bold mb-3">{currentGame.name}</h2>
 
           {/* Key Info */}
           <div className="space-y-4">
             <div>
               <h3 className="font-semibold text-lg">Release Date</h3>
-              <p className="font-[Hubot_Sans]">
-                {formatDate(new Date(currentGame.release_date))}
-              </p>
+              <p>{formatDate(new Date(currentGame.release_date))}</p>
             </div>
 
             <div>
               <h3 className="font-semibold text-lg mb-1">Developers</h3>
-              <div className="flex flex-wrap gap-1 font-[Hubot_Sans]">
+              <div className="flex flex-wrap gap-1">
                 {currentGame.developers && currentGame.developers.length > 0 ? (
                   currentGame.developers.map((developer, index) => (
                     <span
@@ -141,7 +141,7 @@ export default function GameDetail() {
 
             <div>
               <h3 className="font-semibold text-lg mb-1">Genres</h3>
-              <div className="flex flex-wrap gap-1 font-[Hubot_Sans]">
+              <div className="flex flex-wrap gap-1">
                 {currentGame.genres && currentGame.genres.length > 0 ? (
                   currentGame.genres.map((genre, index) => (
                     <span
@@ -181,7 +181,7 @@ export default function GameDetail() {
           {/* Game Summary */}
           <div className="card-background rounded-lg p-4">
             <h2 className="font-semibold text-xl mb-2">About This Game</h2>
-            <p className="leading-relaxed font-[Hubot_Sans]">
+            <p className="leading-relaxed">
               {currentGame.summary ? currentGame.summary : "N/A"}
             </p>
           </div>
@@ -194,7 +194,7 @@ export default function GameDetail() {
               {/* Languages */}
               <div>
                 <h3 className="font-semibold mb-2">Languages Supported</h3>
-                <div className="flex flex-wrap gap-1 font-[Hubot_Sans]">
+                <div className="flex flex-wrap gap-1">
                   {currentGame.languages && currentGame.languages.length > 0 ? (
                     currentGame.languages.map((language, index) => (
                       <span
@@ -213,7 +213,7 @@ export default function GameDetail() {
               {/* Platforms */}
               <div>
                 <h3 className="font-semibold mb-2">Platforms</h3>
-                <div className="flex flex-wrap gap-1 font-[Hubot_Sans]">
+                <div className="flex flex-wrap gap-1">
                   {currentGame.platforms && currentGame.platforms.length > 0 ? (
                     currentGame.platforms.map((platform, index) => (
                       <span

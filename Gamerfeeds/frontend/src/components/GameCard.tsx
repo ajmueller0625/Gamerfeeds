@@ -3,7 +3,7 @@ import { Star, StarHalf } from "lucide-react";
 interface GameData {
   name: string;
   cover_image_url: string;
-  release_date: Date;
+  release_date: Date | string | null;
   rating: number | null;
 }
 
@@ -13,10 +13,17 @@ export default function GameCard({
   release_date,
   rating,
 }: GameData) {
-  const formatDate = (date: Date): string => {
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
-    const year = date.getFullYear();
+  const formatDate = (date: Date | string | null): string => {
+    if (!date) return "TBA";
+
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+
+    // Check if date is valid
+    if (isNaN(dateObj.getTime())) return "Invalid Date";
+
+    const month = (dateObj.getMonth() + 1).toString().padStart(2, "0");
+    const day = dateObj.getDate().toString().padStart(2, "0");
+    const year = dateObj.getFullYear();
 
     return `${month}/${day}/${year}`;
   };
@@ -76,10 +83,10 @@ export default function GameCard({
         <img
           src={cover_image_url}
           alt={`Cover: ${name}`}
-          className="w-full h-full"
+          className="w-full h-full object-cover"
         />
       </div>
-      <div className="font-[Hubot_Sans] rounded-b-lg text-sm">
+      <div className="font-sans rounded-b-lg text-sm">
         <h3>
           <span className="font-bold">Name: </span> {name}
         </h3>

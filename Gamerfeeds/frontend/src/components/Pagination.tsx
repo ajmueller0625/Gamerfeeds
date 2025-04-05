@@ -44,7 +44,7 @@ export default function Pagination({
 
   return (
     <div
-      className={`flex justify-center items-center gap-3 font-[Hubot_Sans] font-semibold ${className}`}
+      className={`flex justify-center items-center gap-3 font-semibold ${className}`}
     >
       <button
         onClick={() => handlePageChange(currentPage > 1 ? currentPage - 1 : 1)}

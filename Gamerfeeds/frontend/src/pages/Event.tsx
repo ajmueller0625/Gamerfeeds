@@ -52,7 +52,11 @@ export default function Event() {
   };
 
   if (isEventLoading) {
-    return <div className="text-white text-center p-5">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center py-12 min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 spinner-color"></div>
+      </div>
+    );
   }
 
   if (eventError) {
@@ -91,7 +95,7 @@ export default function Event() {
           )}
         </>
       ) : (
-        <div className="card-background flex flex-col rounded-lg justify-center items-center font-[Hubot_Sans] px-5 py-8 mx-30">
+        <div className="card-background flex flex-col rounded-lg justify-center items-center px-5 py-8 mx-30">
           <p className="font-bold text-xl">No events found!</p>
           <p className="text-lg">There are no current or upcoming events!</p>
           <Link to="/">

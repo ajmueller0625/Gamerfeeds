@@ -195,7 +195,11 @@ export default function TopGames() {
   };
 
   if (isTopGamesLoading) {
-    return <div className="text-white text-center p-5">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center py-12 min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 spinner-color"></div>
+      </div>
+    );
   }
 
   if (topGamesError) {
@@ -248,7 +252,7 @@ export default function TopGames() {
             )}
           </>
         ) : (
-          <div className="px-5 py-8 card-background font-[Hubot_Sans] rounded-lg flex flex-col items-center justify-center gap-2">
+          <div className="px-5 py-8 card-background rounded-lg flex flex-col items-center justify-center gap-2">
             <p className="text-xl font-bold">
               No games matching the selected filters
             </p>
@@ -269,7 +273,7 @@ export default function TopGames() {
           <h1>Filter</h1>
           <Filter size={20} className="mb-1" />
         </div>
-        <div className="flex flex-col p-4 card-background rounded-lg font-[Hubot_Sans] gap-4">
+        <div className="flex flex-col p-4 card-background rounded-lg gap-4">
           {/* FilterDropdown component */}
           <FilterDropdown
             label="Developers"

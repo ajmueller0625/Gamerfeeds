@@ -12,10 +12,7 @@ export default function EventCard({ id, name, logo_url }: EventProps) {
         alt={`Card Image ${id}`}
         className="object-cover w-full h-full rounded-lg"
       />
-      <div
-        className="absolute bottom-0 left-0 w-full px-3 py-5 bg-neutral-900/50 
-             font-[Hubot_Sans] rounded-b-lg"
-      >
+      <div className="absolute bottom-0 left-0 w-full px-3 py-5 bg-neutral-900/50 rounded-b-lg">
         <h3 className="text-lg font-bold">{name}</h3>
       </div>
     </div>

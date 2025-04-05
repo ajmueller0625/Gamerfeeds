@@ -12,6 +12,7 @@ import NewsArticle from "./pages/NewsArticle";
 import GameDetail from "./pages/GameDetail";
 import Event from "./pages/Event";
 import EventDetail from "./pages/EventDetail";
+import SearchResults from "./pages/SearchResult";
 
 const router = createBrowserRouter([
   {
@@ -53,6 +54,10 @@ const router = createBrowserRouter([
       {
         path: "/events/:eventID",
         element: <EventDetail />,
+      },
+      {
+        path: "/search",
+        element: <SearchResults />,
       },
     ],
   },

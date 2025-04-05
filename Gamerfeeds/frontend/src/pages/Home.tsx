@@ -197,7 +197,11 @@ export default function Home() {
   // Show loading state
   const isLoading = isNewsLoading || isTopGamesLoading || isLatestGamesLoading;
   if (isLoading) {
-    return <div className="text-white text-center p-5">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center py-12 min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 spinner-color"></div>
+      </div>
+    );
   }
 
   // Show error states
