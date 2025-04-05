@@ -1,5 +1,3 @@
-from os import getenv
-from dotenv import load_dotenv
 import requests
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
@@ -18,7 +16,6 @@ class EventDataHandler:
         self.client_id = client_id
         self.client_secret = client_secret
         self.events_url = 'https://api.igdb.com/v4/events'
-        self.games_url = 'https://api.igdb.com/v4/games'
         self.access_token = None
         self.token_expiration = None
 
@@ -83,14 +80,13 @@ class EventDataHandler:
         except Exception as e:
             raise RequestException(f'Query failed: {str(e)}')
 
-    def fetch_events_data(self, fields: str, query_body: str, data_type: str) -> List[Dict[str, Any]]:
+    def fetch_events_data(self, fields: str, query_body: str) -> List[Dict[str, Any]]:
         '''
         Make a query to the IGDB Events API endpoint.
 
         Args:
             fields (str): The fields to return
             query_body (str): Additional query parameters
-            data_type (str): Type of data being fetched (upcoming, current, past)
 
         Returns:
             List[Dict[str, Any]]: List of cleaned event data
@@ -100,31 +96,8 @@ class EventDataHandler:
         '''
         query = f'fields {fields}; {query_body};'
         data = self._make_api_request(self.events_url, query)
-        return self._clean_events_data(data, data_type)
 
-    def get_game_details(self, game_ids: List[int]) -> List[Dict[str, Any]]:
-        """
-        Get details for games associated with events.
-
-        Args:
-            game_ids (List[int]): List of game IDs to fetch
-
-        Returns:
-            List[Dict[str, Any]]: List of game details
-        """
-        if not game_ids:
-            return []
-
-        game_ids_str = ','.join(map(str, game_ids))
-        fields = 'name,first_release_date,genres.name,language_supports.language.name,platforms.name,screenshots.image_id,storyline,summary,aggregated_rating,videos.video_id,cover.image_id,involved_companies.company.name'
-        query = f'fields {fields}; where id = ({game_ids_str});'
-
-        try:
-            game_data = self._make_api_request(self.games_url, query)
-            return game_data
-        except RequestException:
-            # If request fails, return empty list
-            return []
+        return self._clean_events_data(data)
 
     def get_events(self, limit: int, days_ahead: int) -> List[Dict[str, Any]]:
         """
@@ -145,32 +118,25 @@ class EventDataHandler:
 
         # Get events that end in the future (includes both current and upcoming)
         query_body = f'where end_time >= {current_timestamp} & start_time <= {future_timestamp}; sort start_time asc; limit {limit}'
-        fields = 'name,description,start_time,end_time,event_logo.image_id,event_networks,games,live_stream_url,videos'
+        fields = 'name,description,start_time,end_time,event_logo.image_id,event_networks.url,live_stream_url,videos'
 
-        return self.fetch_events_data(fields=fields, query_body=query_body, data_type='event')
+        return self.fetch_events_data(fields=fields, query_body=query_body)
 
-    def _extract_website_url(self, event_networks: Optional[List[Dict[str, Any]]]) -> Optional[str]:
+    def _extract_url(self, event_networks: Optional[List[Dict[str, Any]]]) -> Optional[List[str]]:
         """Extract website URL from event_networks data"""
         if not event_networks:
             return None
 
-        # First try to find the official website
+        result = []
         for network in event_networks:
-            if network.get('network', {}).get('name', '').lower() == 'official':
-                url = network.get('url')
-                if url:
-                    return url
-
-        # If no official website, return the first available URL
-        for network in event_networks:
-            url = network.get('url')
+            url = network.get('url', '')
             if url:
-                return url
+                result.append(url)
 
-        return None
+        return result if result else None
 
     def _get_videos(self, videos: Optional[List[Dict[str, Any]]]) -> Optional[List[str]]:
-        """Extract and format video URLs from video data"""
+        """Extract video URL IDs from video data"""
         if not videos:
             return None
 
@@ -182,13 +148,12 @@ class EventDataHandler:
 
         return result if result else None
 
-    def _clean_events_data(self, data: List[Dict[str, Any]], data_type: str) -> List[Dict[str, Any]]:
+    def _clean_events_data(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Clean and format the raw event data from the API.
 
         Args:
             data (List[Dict[str, Any]]): Raw event data from API
-            data_type (str): Type of data (upcoming, current, past)
 
         Returns:
             List[Dict[str, Any]]: Cleaned and formatted event data
@@ -208,7 +173,7 @@ class EventDataHandler:
             event_logo = event.get('event_logo', {})
             cover_image_id = event_logo.get(
                 'image_id') if isinstance(event_logo, dict) else None
-            cover_image_url = f'https://images.igdb.com/igdb/image/upload/t_cover_big/{cover_image_id}.jpg' if cover_image_id else None
+            cover_image_url = f'https://images.igdb.com/igdb/image/upload/t_original/{cover_image_id}.jpg' if cover_image_id else None
 
             # Date processing
             start_date = None
@@ -229,22 +194,13 @@ class EventDataHandler:
                     pass
 
             # Get website URL from event_networks
-            website_url = self._extract_website_url(
-                event.get('event_networks'))
+            urls = self._extract_url(event.get('event_networks'))
 
             # Add live stream URL if available
             live_stream_url = event.get('live_stream_url')
-            if not website_url and live_stream_url:
-                website_url = live_stream_url
-
-            # Location
-            location = event.get('location')
 
             # Videos
             videos = self._get_videos(event.get('videos'))
-
-            # Games relation
-            games = event.get('games', [])
 
             cleaned_data.append({
                 'name': name,
@@ -252,11 +208,9 @@ class EventDataHandler:
                 'cover_image_url': cover_image_url,
                 'start_date': start_date,
                 'end_date': end_date,
-                'website_url': website_url,
-                'location': location,
-                'data_type': data_type,
+                'live_stream_url': live_stream_url,
+                'urls': urls,
                 'videos': videos,
-                'games': games
             })
 
         return cleaned_data

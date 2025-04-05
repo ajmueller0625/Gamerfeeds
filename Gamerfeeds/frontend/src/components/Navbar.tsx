@@ -73,7 +73,7 @@ export default function Navbar() {
                 </ul>
               )}
             </li>
-            <Link to="">
+            <Link to="/events">
               <li className="py-2 px-6 rounded-lg nav-hover-color">Events</li>
             </Link>
             <Link to="">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import useNewsStore from "../store/newsStore";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import NewsCard from "../components/NewsCard";
 import { Filter } from "lucide-react";
 import Pagination from "../components/Pagination";
@@ -19,16 +19,51 @@ export default function News() {
     fetchPaginatedNews,
   } = useNewsStore();
 
-  // Changed from string to string[] for multiple source selection
-  const [sourceFilters, setSourceFilters] = useState<string[]>([]);
-  const [dateFilter, setDateFilter] = useState<string>("");
-  const [currentPage, setCurrentPage] = useState(1);
+  // Use URL search params to store pagination and filter state
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // Initialize state from URL search params
+  const [currentPage, setCurrentPage] = useState(() => {
+    const page = searchParams.get("page");
+    return page ? parseInt(page) : 1;
+  });
+
+  const [sourceFilters, setSourceFilters] = useState<string[]>(() => {
+    const sources = searchParams.get("sources");
+    return sources ? sources.split(",") : [];
+  });
+
+  const [dateFilter, setDateFilter] = useState<string>(() => {
+    return searchParams.get("date") || "";
+  });
+
   const itemsPerPage = 10;
 
   // Get all news source name for filters
   useEffect(() => {
     fetchAllSources();
   }, [fetchAllSources]);
+
+  // Update URL when filters or pagination change
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (currentPage > 1) {
+      params.set("page", currentPage.toString());
+    }
+
+    if (sourceFilters.length > 0) {
+      params.set("sources", sourceFilters.join(","));
+    }
+
+    if (dateFilter) {
+      params.set("date", dateFilter);
+    }
+
+    // Update URL without causing a navigation/reload
+    setSearchParams(params);
+  }, [currentPage, sourceFilters, dateFilter, setSearchParams]);
 
   // Get paginated news with or without filters
   useEffect(() => {
@@ -81,6 +116,8 @@ export default function News() {
     setSourceFilters([]);
     setDateFilter("");
     setCurrentPage(1);
+    // Clear all search params by navigating to the base URL
+    navigate("/news");
   };
 
   if (isNewsLoading) {
@@ -109,8 +146,8 @@ export default function News() {
           <>
             <div className="grid grid-cols-2 gap-5">
               {news.map((data) => (
-                <div className="h-65">
-                  <Link to={`/news/${data.id}`} key={data.id} className="h-80">
+                <div className="h-65" key={data.id}>
+                  <Link to={`/news/${data.id}`} className="h-80">
                     <NewsCard
                       id={data.id}
                       title={data.title}

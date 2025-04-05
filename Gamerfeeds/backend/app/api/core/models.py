@@ -50,7 +50,7 @@ class News(Base):
     title: Mapped[str] = mapped_column(
         String(255), nullable=False, unique=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    image_url: Mapped[str] = mapped_column(String(255), nullable=False)
+    image_url: Mapped[str] = mapped_column(Text, nullable=False)
     source_url: Mapped[str] = mapped_column(
         String(255), nullable=False, unique=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
@@ -75,9 +75,9 @@ class Game(Base):
     summary: Mapped[str] = mapped_column(Text, nullable=True)
     storyline: Mapped[str] = mapped_column(Text, nullable=True)
     cover_image_url: Mapped[str] = mapped_column(
-        String(255), nullable=False)
+        String(255), nullable=True)
     release_date: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False)
+        DateTime, nullable=True)
     rating: Mapped[float] = mapped_column(Float, nullable=True)
 
     # Relationships
@@ -93,13 +93,11 @@ class Game(Base):
     genres: Mapped[List['Genre']] = relationship(
         secondary='game_genres', back_populates='games')
     languages: Mapped[List['Language']] = relationship(
-        secondary='game_languages', back_populates='languages')
+        secondary='game_languages', back_populates='games')
     screenshots: Mapped[List['Screenshot']] = relationship(
         secondary='game_screenshots', back_populates='games')
     videos: Mapped[List['Video']] = relationship(
         secondary='game_videos', back_populates='games')
-    events: Mapped[List['Event']] = relationship(
-        secondary='event_games', back_populates='games')
 
 
 class GameDataType(Base):
@@ -111,7 +109,6 @@ class GameDataType(Base):
 
     # Relationships
     games: Mapped[List['Game']] = relationship(back_populates='data_type')
-    events: Mapped[List['Event']] = relationship(back_populates='data_type')
 
 
 class Platform(Base):
@@ -242,39 +239,35 @@ class Event(Base):
     __tablename__ = 'events'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     description: Mapped[str] = mapped_column(Text, nullable=True)
-    cover_image_url: Mapped[str] = mapped_column(String(255), nullable=True)
-    start_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    end_date: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    website_url: Mapped[str] = mapped_column(String(255), nullable=True)
-    location: Mapped[str] = mapped_column(String(255), nullable=True)
-    event_type: Mapped[str] = mapped_column(String(100), nullable=True)
+    start_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    end_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    logo_url: Mapped[str] = mapped_column(String(255), nullable=False)
+    live_stream_url: Mapped[str] = mapped_column(String(255), nullable=True)
 
-    # Relationships
-    data_type: Mapped['GameDataType'] = relationship(back_populates='events')
-    data_type_id: Mapped[int] = mapped_column(
-        ForeignKey('game_data_types.id', ondelete='SET NULL'), nullable=False)
-
-    games: Mapped[List['Game']] = relationship(
-        secondary='event_games', back_populates='events')
+    # Relations
+    event_urls: Mapped[List['EventURL']] = relationship(back_populates='event')
     videos: Mapped[List['Video']] = relationship(
         secondary='event_videos', back_populates='events')
 
 
-class EventGame(Base):
-    __tablename__ = 'event_games'
+class EventURL(Base):
+    __tablename__ = 'event_urls'
 
-    event_id: Mapped[int] = mapped_column(
-        ForeignKey('events.id', ondelete='CASCADE'), primary_key=True)
-    game_id: Mapped[int] = mapped_column(
-        ForeignKey('games.id', ondelete='CASCADE'), primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    url: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    # Relations
+    event: Mapped['Event'] = relationship(back_populates='event_urls')
+    event_id: Mapped[int] = mapped_column(ForeignKey(
+        'events.id', ondelete='CASCADE'), primary_key=True)
 
 
 class EventVideo(Base):
     __tablename__ = 'event_videos'
 
-    event_id: Mapped[int] = mapped_column(
-        ForeignKey('events.id', ondelete='CASCADE'), primary_key=True)
-    video_id: Mapped[int] = mapped_column(
-        ForeignKey('videos.id', ondelete='CASCADE'), primary_key=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey(
+        'events.id', ondelete='CASCADE'), primary_key=True)
+    video_id: Mapped[int] = mapped_column(ForeignKey(
+        'videos.id', ondelete='CASCADE'), primary_key=True)

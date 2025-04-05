@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from functools import lru_cache
 import logging
 import asyncio
 from logging.handlers import RotatingFileHandler
@@ -9,19 +10,18 @@ from typing import Any, Dict, List, Tuple, Optional
 from dotenv import load_dotenv
 from app.api.db_setup import get_db
 from sqlalchemy.exc import SQLAlchemyError
-from functools import lru_cache
 from sqlalchemy.orm import Session
 from sqlalchemy import select, delete, text
 from app.api.events.eventdatahandler import EventDataHandler
-from app.api.games.gamedatahandler import GameDataHandler
 
 from app.api.core.models import (
-    Event, Game, GameDataType,
-    Video
+    Developer, Event, EventURL, EventVideo,
+    Genre, Language, Platform, Screenshot, Video
 )
 
-
 # Setup logging
+
+
 def setup_logger(name: str, log_file: str = 'event_updater.log', level=logging.INFO):
     """
     Configure a logger with rotating file handler
@@ -88,155 +88,149 @@ def db_session_manager():
         db.close()
 
 
-def check_event_exist(name: str, start_date: datetime, db: Session) -> bool:
+def check_event_exist(name: str, start_time: datetime, db: Session) -> Optional[Event]:
     """
-    Check if the event exists based on name and start date
+    Check if the event exists based on name and start time
 
     Args:
         name: The event's name
-        start_date: The event's start date
+        start_time: The event's start time
         db: Database session
 
     Returns:
-        True if the event exists
+        Event object if exists, None otherwise
     """
-    if not name or not start_date:
-        return False
+    if not name or not start_time:
+        return None
 
     try:
-        exist = db.scalars(select(Event).where(Event.name == name).where(
-            Event.start_date == start_date)).one_or_none()
-        return exist is not None
+        exist = db.scalars(select(Event)
+                           .where(Event.name == name)
+                           .where(Event.start_time == start_time)).one_or_none()
+        return exist
     except SQLAlchemyError as e:
         logger.error(f"Error checking event existence for Event - {name}: {e}")
-        return False  # Assume it does not exist
+        return None
 
 
-@lru_cache(maxsize=50)
-def get_data_type_id(name: str, db: Session) -> int:
+def delete_expired_events(db: Session, days_after_end: int = 7) -> int:
     """
-    Check if the data type exists and create a new data type if it does not
-    with cache for performance
+    Delete events that have ended more than specified days ago
 
     Args:
-        name: Game data type name
-        db: Database Session
+        db: Database session
+        days_after_end: Number of days after event end to keep the event before deletion
 
     Returns:
-        Data type ID
+        Number of deleted events
     """
     try:
-        exist_data_type = db.scalars(
-            select(GameDataType.id).where(GameDataType.name == name)).one_or_none()
-        if exist_data_type:
-            return exist_data_type
+        cutoff_date = datetime.now() - timedelta(days=days_after_end)
+        # Get all expired events
+        expired_events = db.scalars(
+            select(Event).where(Event.end_time < cutoff_date)
+        ).all()
 
-        new_data_type = GameDataType(name=name)
-        db.add(new_data_type)
+        deleted_count = 0
+
+        for event in expired_events:
+            logger.info(
+                f"Deleting expired event: {event.name} (ID: {event.id})")
+
+            # Delete event URLs
+            db.execute(delete(EventURL).where(EventURL.event_id == event.id))
+
+            # Delete event video associations
+            db.execute(delete(EventVideo).where(
+                EventVideo.event_id == event.id))
+
+            # Delete the event itself
+            db.delete(event)
+            deleted_count += 1
+
         db.flush()
+        return deleted_count
 
-        return new_data_type.id
     except SQLAlchemyError as e:
-        logger.error(f"Error getting data type id for Data type - {name}: {e}")
+        logger.error(f"Error deleting expired events: {e}")
         raise
 
 
-def get_all_data(field_list: Optional[List[str]], model_class: Any, db: Session, unique_field='name') -> List[Any]:
+def save_event_videos(event: Event, video_ids: List[str], db: Session) -> None:
     """
-    Get all data from database based in model class 
+    Save videos associated with an event
 
     Args:
-        field_list: List of field values to get or create
-        model_class: Model class data should have
+        event: Event object
+        video_ids: List of video IDs
         db: Database session
-        unique_field: The unique field of the database model
-
-    Return:
-        List of model instances
     """
-    if not field_list:
-        return []
-
-    result = []
-    for field in field_list:
-        item = get_data_from_model(field, model_class, db, unique_field)
-        if item:
-            result.append(item)
-
-    return result
-
-
-@lru_cache(maxsize=100)
-def get_data_from_model(field: str, model_class: Any, db: Session, unique_field: str = "name") -> Any:
-    """
-    Check if the data exists based on field, unique field and class model
-    then create a new data if it does not with cache for performance
-
-    Args:
-        field: The data field value
-        model_class: Model class data should have
-        db: Database session
-        unique_field: The unique field of the database model
-
-    Returns:
-        Instance of the model class
-    """
-    if not field:
-        return None
+    if not video_ids:
+        return
 
     try:
-        exist = db.scalars(select(model_class).where(
-            getattr(model_class, unique_field) == field)).one_or_none()
+        for video_id in video_ids:
+            if not video_id:
+                continue
 
-        if exist:
-            return exist
+            # Check if video already exists
+            existing_video = db.scalars(
+                select(Video).where(Video.video_url_id == video_id)
+            ).one_or_none()
 
-        new_object = model_class(**{unique_field: field})
-        db.add(new_object)
-        db.flush()
+            if not existing_video:
+                # Create new video
+                new_video = Video(video_url_id=video_id)
+                db.add(new_video)
+                db.flush()
 
-        return new_object
+                # Create association
+                event.videos.append(new_video)
+            else:
+                # Check if association already exists
+                if existing_video not in event.videos:
+                    event.videos.append(existing_video)
 
     except SQLAlchemyError as e:
-        logger.error(
-            f"Error checking data existence for Data - {field}: {e}")
-        return None
+        logger.error(f"Error saving videos for event {event.name}: {e}")
+        raise
 
 
-def get_game_by_id(game_id: int, db: Session) -> Optional[Game]:
+def save_event_urls(event: Event, urls: List[str], db: Session) -> None:
     """
-    Get a Game instance by its ID
+    Save URLs associated with an event
 
     Args:
-        game_id: The game ID
-        db: Database session
-
-    Returns:
-        Game instance or None if not found
-    """
-    try:
-        return db.scalars(select(Game).where(Game.id == game_id)).one_or_none()
-    except SQLAlchemyError as e:
-        logger.error(f"Error getting game with ID {game_id}: {e}")
-        return None
-
-
-def update_exist_events(db: Session) -> None:
-    """
-    Delete all past events from the database (events with end dates in the past)
-
-    Args:
+        event: Event object
+        urls: List of URLs
         db: Database session
     """
+    if not urls:
+        return
+
     try:
-        today = datetime.now()
-        # Delete all events that already ended
-        query = delete(Event).where(Event.end_date <= today)
-        rows_deleted = db.execute(query).rowcount
-        logger.info(
-            f"Deleted {rows_deleted} already ended events from the database")
+        # Delete existing URLs for this event
+        db.execute(delete(EventURL).where(EventURL.event_id == event.id))
+
+        # Get live stream URL to check for duplicates
+        live_stream_url = event.live_stream_url
+
+        # Add new URLs
+        for url in urls:
+            if not url:
+                continue
+
+            # Skip URLs that are the same as the live stream URL
+            if live_stream_url and url == live_stream_url:
+                logger.info(
+                    f"Skipping URL that matches live stream URL for event {event.name}: {url}")
+                continue
+
+            new_url = EventURL(url=url, event=event)
+            db.add(new_url)
+
     except SQLAlchemyError as e:
-        logger.error(f"Error deleting past events: {e}")
+        logger.error(f"Error saving URLs for event {event.name}: {e}")
         raise
 
 
@@ -245,15 +239,15 @@ async def batch_save_events(events: List[Dict[str, Any]], batch_size: int = 10) 
     Save events to database in batches with error handling
 
     Args:
-        events: List of events dictionaries
+        events: List of event dictionaries
         batch_size: Number of events to save in each batch
 
     Returns:
-        Tuple of (saved_count, skipped_count, error_count)
+        Tuple of (saved_count, updated_count, error_count)
     """
     total_events = len(events)
     saved_count = 0
-    skipped_count = 0
+    updated_count = 0
     error_count = 0
 
     logger.info(
@@ -268,91 +262,104 @@ async def batch_save_events(events: List[Dict[str, Any]], batch_size: int = 10) 
             f"Processing batch {batch_start+1}-{batch_end} of {total_events}")
 
         with db_session_manager() as db:
-            for event in batch:
+            for event_data in batch:
                 try:
-                    # Check if event already exists
-                    event_exists = check_event_exist(
-                        event.get('name', ''), event.get('start_date'), db)
+                    name = event_data.get('name')
+                    start_date = event_data.get('start_date')
 
-                    if event_exists:
-                        skipped_count += 1
+                    if not name or not start_date:
+                        logger.warning(
+                            f"Skipping event with missing name or start date: {event_data}")
                         continue
 
-                    # Process data type
-                    data_type_id = get_data_type_id(event.get('data_type'), db)
+                    # Check if event already exists
+                    existing_event = check_event_exist(name, start_date, db)
 
-                    # Process videos
-                    videos = get_all_data(
-                        event.get('videos'), Video, db, 'video_url_id')
+                    if existing_event:
+                        # Update existing event
+                        existing_event.description = event_data.get(
+                            'description')
+                        existing_event.end_time = event_data.get('end_date')
+                        existing_event.logo_url = event_data.get(
+                            'cover_image_url', '')
+                        existing_event.live_stream_url = event_data.get(
+                            'live_stream_url')
 
-                    # Process games
-                    games = []
-                    for game_id in event.get('games', []):
-                        game = get_game_by_id(game_id, db)
-                        if game:
-                            games.append(game)
+                        # Update related data
+                        save_event_videos(
+                            existing_event, event_data.get('videos', []), db)
+                        save_event_urls(
+                            existing_event, event_data.get('urls', []), db)
 
-                    # Create new event
-                    new_event = Event(
-                        name=event.get('name'),
-                        description=event.get('description'),
-                        cover_image_url=event.get('cover_image_url'),
-                        start_date=event.get('start_date'),
-                        end_date=event.get('end_date'),
-                        website_url=event.get('website_url'),
-                        location=event.get('location'),
-                        data_type_id=data_type_id,
-                        games=games,
-                        videos=videos
-                    )
+                        updated_count += 1
+                    else:
+                        # Create new event
+                        new_event = Event(
+                            name=name,
+                            description=event_data.get('description'),
+                            start_time=start_date,
+                            end_time=event_data.get('end_date'),
+                            logo_url=event_data.get('cover_image_url', ''),
+                            live_stream_url=event_data.get('live_stream_url')
+                        )
 
-                    db.add(new_event)
-                    saved_count += 1
+                        db.add(new_event)
+                        db.flush()  # Flush to get the new event ID
+
+                        # Save related data
+                        save_event_videos(
+                            new_event, event_data.get('videos', []), db)
+                        save_event_urls(
+                            new_event, event_data.get('urls', []), db)
+
+                        saved_count += 1
 
                 except Exception as e:
                     error_count += 1
                     logger.error(
-                        f'Error saving event {event.get("name", "Unknown")}: {e}')
+                        f"Error saving event {event_data.get('name', 'Unknown')}: {e}")
 
     logger.info(
-        f'Database update complete. Saved: {saved_count}, Skipped: {skipped_count}, Error: {error_count}')
-    return saved_count, skipped_count, error_count
+        f"Database update complete. Saved: {saved_count}, Updated: {updated_count}, Error: {error_count}")
+    return saved_count, updated_count, error_count
 
 
-async def update_events(client_id: str, client_secret: str) -> None:
+async def update_events(client_id: str, client_secret: str, days_ahead: int = 90) -> None:
     """
-    Function for updating event data asynchronously
+    Update events data
 
     Args:
-        client_id: IGDB app client id
-        client_secret: IGDB app client secret id
+        client_id: Twitch client ID
+        client_secret: Twitch client secret
+        days_ahead: Number of days ahead to fetch events for
     """
     try:
-        # First clean up existing events
+        # Clean up expired events
         with db_session_manager() as db:
-            update_exist_events(db)
+            deleted = delete_expired_events(db)
+            logger.info(f"Deleted {deleted} expired events")
 
+        # Fetch and update events
         handler = EventDataHandler(
             client_id=client_id, client_secret=client_secret)
 
-        logger.info("Fetching event data")
-        events = handler.get_events(limit=150, days_ahead=180)
+        logger.info(f"Fetching events data for the next {days_ahead} days")
+        events = handler.get_events(limit=500, days_ahead=days_ahead)
         logger.info(f"Retrieved {len(events)} events from API")
 
-        saved, skipped, errors = await batch_save_events(events)
+        saved, updated, errors = await batch_save_events(events)
 
         logger.info(
-            f"Events update: Processed {len(events)}, Saved {saved}, Skipped {skipped}, Errors {errors}")
+            f"Events update: Processed {len(events)}, Saved {saved}, Updated {updated}, Errors {errors}")
 
     except Exception as e:
-        logger.error(
-            f"Failed to update event data: {e}", exc_info=True)
+        logger.error(f"Failed to update events data: {e}", exc_info=True)
         raise
 
 
 async def main() -> None:
     """
-    Main function to run all update tasks
+    Main function to run event update task
     """
     load_dotenv()
     client_id = getenv('TWITCH_CLIENT_ID')
@@ -364,7 +371,6 @@ async def main() -> None:
         return
 
     try:
-        # Execute single update task for all events
         await update_events(client_id, client_secret)
         logger.info("Event data update completed successfully")
     except Exception as e:

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import useGameStore from "../store/gameStore";
 import GameCard from "../components/GameCard";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Filter } from "lucide-react";
-import FilterDropdown from "../components/FilterDropdown"; // Import the new component
+import FilterDropdown from "../components/FilterDropdown";
 import Pagination from "../components/Pagination";
 
 export default function LatestGames() {
@@ -30,30 +30,83 @@ export default function LatestGames() {
     fetchGenres,
     fetchLanguages,
   } = useGameStore();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [developersFilters, setDevelopersFilters] = useState<string[]>([]);
-  const [platformsFilters, setPlatformsFilters] = useState<string[]>([]);
-  const [genresFilters, setGenresFilters] = useState<string[]>([]);
-  const [languagesFilters, setLanguagesFilters] = useState<string[]>([]);
+
+  // Use URL search params to store pagination and filter state
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // Initialize state from URL search params
+  const [currentPage, setCurrentPage] = useState(() => {
+    const page = searchParams.get("page");
+    return page ? parseInt(page) : 1;
+  });
+
+  const [developersFilters, setDevelopersFilters] = useState<string[]>(() => {
+    const developers = searchParams.get("developers");
+    return developers ? developers.split(",") : [];
+  });
+
+  const [platformsFilters, setPlatformsFilters] = useState<string[]>(() => {
+    const platforms = searchParams.get("platforms");
+    return platforms ? platforms.split(",") : [];
+  });
+
+  const [genresFilters, setGenresFilters] = useState<string[]>(() => {
+    const genres = searchParams.get("genres");
+    return genres ? genres.split(",") : [];
+  });
+
+  const [languagesFilters, setLanguagesFilters] = useState<string[]>(() => {
+    const languages = searchParams.get("languages");
+    return languages ? languages.split(",") : [];
+  });
 
   const itemsPerPage = 12;
 
+  // Load filter options
   useEffect(() => {
     fetchDevelopers();
-  }, [fetchDevelopers]);
-
-  useEffect(() => {
     fetchPlatforms();
-  }, [fetchPlatforms]);
-
-  useEffect(() => {
     fetchGenres();
-  }, [fetchGenres]);
-
-  useEffect(() => {
     fetchLanguages();
-  }, [fetchLanguages]);
+  }, [fetchDevelopers, fetchPlatforms, fetchGenres, fetchLanguages]);
 
+  // Update URL when filters or pagination change
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (currentPage > 1) {
+      params.set("page", currentPage.toString());
+    }
+
+    if (developersFilters.length > 0) {
+      params.set("developers", developersFilters.join(","));
+    }
+
+    if (platformsFilters.length > 0) {
+      params.set("platforms", platformsFilters.join(","));
+    }
+
+    if (genresFilters.length > 0) {
+      params.set("genres", genresFilters.join(","));
+    }
+
+    if (languagesFilters.length > 0) {
+      params.set("languages", languagesFilters.join(","));
+    }
+
+    // Update URL without causing a navigation/reload
+    setSearchParams(params);
+  }, [
+    currentPage,
+    developersFilters,
+    platformsFilters,
+    genresFilters,
+    languagesFilters,
+    setSearchParams,
+  ]);
+
+  // Fetch games with current pagination and filters
   useEffect(() => {
     const developersFilterString = developersFilters.join(",");
     const platformsFilterString = platformsFilters.join(",");
@@ -63,10 +116,10 @@ export default function LatestGames() {
     fetchLatestGames(
       currentPage,
       itemsPerPage,
-      developersFilterString,
-      platformsFilterString,
-      genresFilterString,
-      languagesFilterString
+      developersFilterString || undefined,
+      platformsFilterString || undefined,
+      genresFilterString || undefined,
+      languagesFilterString || undefined
     );
   }, [
     fetchLatestGames,
@@ -137,6 +190,8 @@ export default function LatestGames() {
     setGenresFilters([]);
     setLanguagesFilters([]);
     setCurrentPage(1);
+    // Clear all search params by navigating to the base URL
+    navigate("/latestgames");
   };
 
   if (isLatestGamesLoading) {
@@ -263,8 +318,7 @@ export default function LatestGames() {
           </button>
 
           <p className="text-sm p-1 text-center">
-            Showing {latestGames.length} of {pagination?.total_items || 0} news
-            items
+            Showing {latestGames.length} of {pagination?.total_items || 0} games
           </p>
         </div>
       </div>

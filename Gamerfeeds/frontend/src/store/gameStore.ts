@@ -137,25 +137,25 @@ const useGameStore = create<GameState>((set) => ({
 
             const response = await fetch(url);
 
-            if(!response.ok) {
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        set({
-                            topGames: [],
-                            pagination: {
-                                page: page,
-                                perPage: perPage,
-                                total_items: 0,
-                                total_pages: 0
-                            },
-                            isTopGamesLoading: false,
-                            topGamesError: null,
-                        });
-                        return;
-                    }
-                    throw Error('Failed to fetch news')
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    set({
+                        topGames: [],
+                        pagination: {
+                            page: page,
+                            perPage: perPage,
+                            total_items: 0,
+                            total_pages: 0
+                        },
+                        isTopGamesLoading: false,
+                        topGamesError: null,
+                    });
+                    return;
                 }
+                throw Error('Failed to fetch news')
             }
+
 
             const data = await response.json();
             set({ 
@@ -194,25 +194,24 @@ const useGameStore = create<GameState>((set) => ({
 
             const response = await fetch(url);
 
-            if(!response.ok) {
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        set({
-                            latestGames: [],
-                            pagination: {
-                                page: page,
-                                perPage: perPage,
-                                total_items: 0,
-                                total_pages: 0
-                            },
-                            isLatestGamesLoading: false,
-                            latestGamesError: null,
-                        });
-                        return;
-                    }
-                    throw Error('Failed to fetch news')
+            if (!response.ok) {
+                if (response.status === 404) {
+                    set({
+                        latestGames: [],
+                        pagination: {
+                            page: page,
+                            perPage: perPage,
+                            total_items: 0,
+                            total_pages: 0
+                        },
+                        isLatestGamesLoading: false,
+                        latestGamesError: null,
+                    });
+                    return;
                 }
+                throw Error('Failed to fetch news')
             }
+
 
             const data = await response.json();
             set({ 
@@ -250,24 +249,23 @@ const useGameStore = create<GameState>((set) => ({
 
             const response = await fetch(url);
 
-            if(!response.ok) {
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        set({
-                            upcomingGames: [],
-                            pagination: {
-                                page: page,
-                                perPage: perPage,
-                                total_items: 0,
-                                total_pages: 0
-                            },
-                            isUpcomingGamesLoading: false,
-                            upcomingGamesError: null,
-                        });
-                        return;
-                    }
-                    throw Error('Failed to fetch news')
+            
+            if (!response.ok) {
+                if (response.status === 404) {
+                    set({
+                        upcomingGames: [],
+                        pagination: {
+                            page: page,
+                            perPage: perPage,
+                            total_items: 0,
+                            total_pages: 0
+                        },
+                        isUpcomingGamesLoading: false,
+                        upcomingGamesError: null,
+                    });
+                    return;
                 }
+                throw Error('Failed to fetch news')
             }
 
             const data = await response.json();

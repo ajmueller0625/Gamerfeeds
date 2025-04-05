@@ -102,15 +102,18 @@ class GameDataHandler:
 
     def get_top_games(self, limit: int) -> List[Dict[str, Any]]:
         """
-        Get top-rated games sorted by aggregated rating.
+        Get top-rated games sorted by aggregated rating, only from 2010 and later.
 
         Args:
             limit (int): Number of games to retrieve
 
         Returns:
-            List[Dict[str, Any]]: List of top-rated games
+            List[Dict[str, Any]]: List of top-rated games from 2010 and later
         """
-        query_body = f'where aggregated_rating != null & first_release_date != null & cover.image_id !=null; sort aggregated_rating desc; limit {limit}'
+        # Calculate Unix timestamp for January 1, 2010
+        jan_1_2010 = datetime(2010, 1, 1).timestamp()
+
+        query_body = f'where aggregated_rating != null & first_release_date != null & first_release_date >= {int(jan_1_2010)} & cover.image_id !=null; sort aggregated_rating desc; limit {limit}'
         fields = 'name,first_release_date,genres.name,language_supports.language.name,platforms.name,screenshots.image_id,storyline,summary,aggregated_rating,videos.video_id,cover.image_id,involved_companies.company.name'
 
         return self.fetch_games_data(fields=fields, query_body=query_body, data_type='top')
@@ -269,7 +272,7 @@ class GameDataHandler:
             cover_data = game.get('cover', {})
             cover_image_id = cover_data.get(
                 'image_id') if isinstance(cover_data, dict) else None
-            cover_url = f'https://images.igdb.com/igdb/image/upload/t_cover_big/{cover_image_id}.jpg' if cover_image_id else None
+            cover_url = f'https://images.igdb.com/igdb/image/upload/t_original/{cover_image_id}.jpg' if cover_image_id else None
 
             # Release date processing
             release_date = None

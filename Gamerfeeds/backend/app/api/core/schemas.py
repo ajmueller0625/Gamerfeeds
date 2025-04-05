@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
 
 
@@ -150,32 +150,72 @@ class GameResponseSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class EventURLSchema(BaseModel):
+
+    url: str = Field(..., description="URL for the event")
+    event_id: int = Field(...,
+                          description="ID of the event this URL belongs to")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EventURLResponseSchema(BaseModel):
+
+    id: int = Field(..., description="Unique identifier for the event URL")
+    url: str = Field(..., description="URL for the event")
+    event_id: int = Field(...,
+                          description="ID of the event this URL belongs to")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EventVideoSchema(BaseModel):
+
+    event_id: int = Field(..., description="ID of the event")
+    video_id: int = Field(..., description="ID of the video")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class EventSchema(BaseModel):
-    name: str = Field(..., min_length=3, max_length=255)
-    description: str | None = None
-    cover_image_url: str | None = Field(None, max_length=255)
-    start_date: datetime
-    end_date: datetime | None = None
-    website_url: str | None = Field(None, max_length=255)
-    location: str | None = Field(None, max_length=255)
-    event_type: str | None = Field(None, max_length=100)
-    data_type: str
-    games: List[int] | None = []
-    videos: List[str] | None = []
+
+    name: str = Field(..., min_length=3, max_length=255,
+                      description="Name of the event")
+    description: Optional[str] = Field(
+        None, description="Description of the event")
+    start_time: datetime = Field(..., description="Start time of the event")
+    end_time: datetime = Field(..., description="End time of the event")
+    logo_url: str = Field(..., min_length=10, max_length=255,
+                          description="URL to the event logo image")
+    live_stream_url: Optional[str] = Field(
+        None, max_length=255, description="URL to the event's live stream")
+    urls: Optional[List[str]] = Field(
+        None, description="List of URLs related to the event")
+    videos: Optional[List[str]] = Field(
+        None, description="List of video IDs for the event")
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class EventResponseSchema(BaseModel):
-    id: int
-    name: str
-    description: str | None = None
-    cover_image_url: str | None = None
-    start_date: datetime
-    end_date: datetime | None = None
-    website_url: str | None = None
-    location: str | None = None
-    event_type: str | None = None
-    data_type_id: int
+
+    id: int = Field(..., description="Unique identifier for the event")
+    name: str = Field(..., description="Name of the event")
+    description: Optional[str] = Field(
+        None, description="Description of the event")
+    start_time: datetime = Field(..., description="Start time of the event")
+    end_time: datetime = Field(..., description="End time of the event")
+    logo_url: str = Field(..., description="URL to the event logo image")
+    live_stream_url: Optional[str] = Field(
+        None, description="URL to the event's live stream")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EventDetailResponseSchema(EventResponseSchema):
+
+    event_urls: List[str] = Field(
+        default=[], description="URLs associated with the event")
+    videos: List[dict] = Field(default=[], description="Videos for the event")
 
     model_config = ConfigDict(from_attributes=True)

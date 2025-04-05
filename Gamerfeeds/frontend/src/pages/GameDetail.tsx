@@ -115,18 +115,14 @@ export default function GameDetail() {
           {/* Key Info */}
           <div className="space-y-4">
             <div>
-              <h3 className="font-semibold text-lg div-header pb-1 mb-2">
-                Release Date
-              </h3>
+              <h3 className="font-semibold text-lg">Release Date</h3>
               <p className="font-[Hubot_Sans]">
                 {formatDate(new Date(currentGame.release_date))}
               </p>
             </div>
 
             <div>
-              <h3 className="font-semibold text-lg div-header pb-1 mb-2">
-                Developers
-              </h3>
+              <h3 className="font-semibold text-lg mb-1">Developers</h3>
               <div className="flex flex-wrap gap-1 font-[Hubot_Sans]">
                 {currentGame.developers && currentGame.developers.length > 0 ? (
                   currentGame.developers.map((developer, index) => (
@@ -144,9 +140,7 @@ export default function GameDetail() {
             </div>
 
             <div>
-              <h3 className="font-semibold text-lg div-header pb-1 mb-2">
-                Genres
-              </h3>
+              <h3 className="font-semibold text-lg mb-1">Genres</h3>
               <div className="flex flex-wrap gap-1 font-[Hubot_Sans]">
                 {currentGame.genres && currentGame.genres.length > 0 ? (
                   currentGame.genres.map((genre, index) => (
@@ -165,9 +159,7 @@ export default function GameDetail() {
 
             {/* Rating */}
             <div>
-              <h3 className="font-semibold text-lg div-header pb-1 mb-2">
-                Rating
-              </h3>
+              <h3 className="font-semibold text-lg mb-1">Rating</h3>
               {renderStars(currentGame.rating)}
             </div>
           </div>
@@ -188,9 +180,7 @@ export default function GameDetail() {
 
           {/* Game Summary */}
           <div className="card-background rounded-lg p-4">
-            <h2 className="font-semibold text-xl div-header pb-2 mb-3">
-              About This Game
-            </h2>
+            <h2 className="font-semibold text-xl mb-2">About This Game</h2>
             <p className="leading-relaxed font-[Hubot_Sans]">
               {currentGame.summary ? currentGame.summary : "N/A"}
             </p>
@@ -198,16 +188,12 @@ export default function GameDetail() {
 
           {/* Game Details */}
           <div className="card-background rounded-lg p-4">
-            <h2 className="font-semibold text-xl div-header pb-2 mb-3">
-              System Details
-            </h2>
+            <h2 className="font-semibold text-xl mb-2">System Details</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Languages */}
               <div>
-                <h3 className="font-semibold div-header pb-1 mb-2">
-                  Languages Supported
-                </h3>
+                <h3 className="font-semibold mb-2">Languages Supported</h3>
                 <div className="flex flex-wrap gap-1 font-[Hubot_Sans]">
                   {currentGame.languages && currentGame.languages.length > 0 ? (
                     currentGame.languages.map((language, index) => (
@@ -226,9 +212,7 @@ export default function GameDetail() {
 
               {/* Platforms */}
               <div>
-                <h3 className="font-semibold div-header pb-1 mb-2">
-                  Platforms
-                </h3>
+                <h3 className="font-semibold mb-2">Platforms</h3>
                 <div className="flex flex-wrap gap-1 font-[Hubot_Sans]">
                   {currentGame.platforms && currentGame.platforms.length > 0 ? (
                     currentGame.platforms.map((platform, index) => (
