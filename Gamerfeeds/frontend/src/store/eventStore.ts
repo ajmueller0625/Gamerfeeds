@@ -1,23 +1,6 @@
 import { create } from "zustand";
 const API_URL = import.meta.env.VITE_API_URL;
 
-export interface GameData {
-    id: number;
-    name: string;
-    summary: string | null;
-    storyline: string | null;
-    cover_image_url: string;
-    release_date: string;
-    data_type: string;
-    developers: string[] | null;
-    platforms: string[] | null;
-    genres: string[] | null;
-    languages: string[] | null;
-    screenshots: string[] | null;
-    videos: string[] | null;
-    rating: number | null;
-}
-
 export interface EventData {
     id: number;
     name: string;
@@ -28,7 +11,6 @@ export interface EventData {
     live_stream_url: string;
     event_urls: string[];
     videos: string[];
-    games: GameData[];
 
 }
 
