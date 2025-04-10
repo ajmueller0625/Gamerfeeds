@@ -14,6 +14,8 @@
     --carousel-bg: #ffffff;
     --search-btn: #60a5fa;
     --spinner-color: #60a5fa;
+    --submit-button: #60a5fa;
+    --submit-button-hover: #7dd3fc;
 }
 
 .dark {
@@ -31,6 +33,8 @@
     --carousel-bg: #000000;
     --search-btn: #404040;
     --spinner-color: #ef4444;
+    --submit-button: #404040;
+    --submit-button-hover: #525252;
 }
 
 body {
@@ -60,6 +64,22 @@ footer {
 }
 
 .nav-ul-background li:hover {
+    background-color: var(--dropdown-nav-hover);
+}
+
+.menu-ul-background {
+    background-color: var(--dropdown-nav-bg);
+}
+
+.menu-ul-background li {
+    border-bottom: 1px solid var(--dropdown-nav-hover);
+}
+
+.menu-ul-background div {
+    border-bottom: 1px solid var(--dropdown-nav-hover);
+}
+
+.menu-ul-background li:hover {
     background-color: var(--dropdown-nav-hover);
 }
 
@@ -103,26 +123,61 @@ footer {
     opacity: 100%;
 }
 
-.search-dropdown {
+.shadow-dropdown {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  .search-dropdown {
+    cursor: pointer;
     background-color: var(--dropdown-nav-bg);
-}
-
-.search-dropdown:hover {
+  }
+  
+  .search-dropdown:hover {
     background-color: var(--dropdown-nav-hover);
-}
-
-.search-dropdown-border {
+  }
+  
+  .search-dropdown-border {
     border-bottom: 1px solid var(--dropdown-nav-hover);
-}
-
-.search-dropdown, .search-option, .search-option-active {
-    transition: all 0.2s ease-in-out;
-}
-
-.search-results-container {
-    transition: opacity 0.2s ease-in-out;
-}
+  }
+  
+  .search-dropdown, 
+  .search-option, 
+  .search-option-active {
+    transition: background-color 0.15s ease-in-out;
+  }
+  
+  .search-results-container {
+    opacity: 1;
+    transition: opacity 0.15s linear;
+  }
+  
+  input:focus {
+    outline: none;
+  }
+  
+  .search-results-container a {
+    display: block;
+    width: 100%;
+  }
+  
+  .search-results-container,
+  .search-results-container a,
+  .search-results-container div {
+    pointer-events: auto;
+  }
+  
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
 
 .spinner-color {
     border-color: var(--spinner-color);
+}
+
+.submit-button {
+    background-color: var(--submit-button);
+}
+
+.submit-button:hover {
+    background-color: var(--submit-button-hover);
 }

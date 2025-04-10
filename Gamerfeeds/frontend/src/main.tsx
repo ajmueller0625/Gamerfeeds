@@ -13,6 +13,12 @@ import GameDetail from "./pages/GameDetail";
 import Event from "./pages/Event";
 import EventDetail from "./pages/EventDetail";
 import SearchResults from "./pages/SearchResult";
+import Login from "./pages/Login";
+import Profile from "./pages/Profile";
+import ChangePassword from "./pages/ChangePassword";
+import Register from "./pages/Register";
+import ForgetPassword from "./pages/ForgetPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 const router = createBrowserRouter([
   {
@@ -58,6 +64,30 @@ const router = createBrowserRouter([
       {
         path: "/search",
         element: <SearchResults />,
+      },
+      {
+        path: "/login",
+        element: <Login />,
+      },
+      {
+        path: "/me/profile",
+        element: <Profile />,
+      },
+      {
+        path: "/me/change-password",
+        element: <ChangePassword />,
+      },
+      {
+        path: "/login/register",
+        element: <Register />,
+      },
+      {
+        path: "/login/forget-password",
+        element: <ForgetPassword />,
+      },
+      {
+        path: "/reset-password",
+        element: <ResetPassword />,
       },
     ],
   },

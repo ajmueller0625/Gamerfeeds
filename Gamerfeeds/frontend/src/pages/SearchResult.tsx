@@ -158,9 +158,7 @@ export default function SearchResults() {
           <p className="text-lg mb-2">
             No results found for "{debouncedQuery}"
           </p>
-          <p className="text-neutral-500 dark:text-neutral-400">
-            Try different keywords or search in a different category
-          </p>
+          <p>Try different keywords or search in a different category</p>
         </div>
       ) : (
         <>

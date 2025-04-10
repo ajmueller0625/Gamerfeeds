@@ -9,11 +9,9 @@ from app.api.core.models import (
     Event, EventURL, EventVideo, Video
 )
 
-# Import the schemas from the updated event schemas file
-# You'll need to adjust this import path to where you put the schemas
 from app.api.core.schemas import (
     EventSchema, EventResponseSchema, EventDetailResponseSchema,
-    EventURLSchema, EventURLResponseSchema, EventVideoSchema
+    EventURLSchema, EventURLResponseSchema
 )
 
 router = APIRouter(tags=['events'])

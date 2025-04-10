@@ -1,14 +1,84 @@
 from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel, Field, EmailStr, ConfigDict
+from pydantic import BaseModel, Field, EmailStr, ConfigDict, PrivateAttr
 
 
-class UserSchema(BaseModel):
+class TokenSchema(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenPayload(BaseModel):
+    sub: str = None
+    exp: int = None
+
+
+class TokenData(BaseModel):
+    id: str | None = None
+
+
+class PasswordChangeSchema(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class PasswordResetRequestSchema(BaseModel):
+    email: EmailStr = Field(...,
+                            description="Email address for password reset")
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"email": "user@example.com"}}
+    )
+
+
+class PasswordResetConfirmSchema(BaseModel):
+    token: str = Field(...,
+                       description="Password reset token received via email")
+    new_password: str = Field(
+        ..., min_length=8, description="New password that meets security requirements"
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "token": "randomsecuretoken",
+                "new_password": "NewSecurePassword123",
+            }
+        }
+    )
+
+
+class UserRegisterSchema(BaseModel):
     username: str = Field(..., max_length=100)
     firstname: str = Field(..., max_length=100)
     lastname: str = Field(..., max_length=100)
     email: EmailStr
-    password: str = Field(..., max_length=255)
+    password: str = Field(..., max_length=100, min_length=8, example="yourpassword",
+                          description="Password", json_schema_extra={"format": "password"})
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserSchema(BaseModel):
+    id: int
+    username: str = Field(..., max_length=100)
+    firstname: str = Field(..., max_length=100)
+    lastname: str = Field(..., max_length=100)
+    email: EmailStr
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserOutSchema(UserSchema):
+    is_superuser: bool
+
+
+class UserUpdateSchema(BaseModel):
+
+    username: str | None = None
+    firstname: str | None = None
+    lastname: str | None = None
+    email: EmailStr | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

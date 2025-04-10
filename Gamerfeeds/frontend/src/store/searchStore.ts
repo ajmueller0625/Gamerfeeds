@@ -107,7 +107,7 @@ const useSearchStore = create<SearchState>((set, get) => {
     results: [],
     quickResults: [],
     pagination: null,
-    searchType: 'all',
+    searchType: 'games',
     isSearching: false,
     isQuickSearching: false,
     query: "",

@@ -6,20 +6,20 @@ interface SearchDropdownProps {
   results: SearchResult[];
   isLoading: boolean;
   error: string | null;
-  onClose: () => void;
+  onLinkClick: () => void;
 }
 
 export default function SearchDropdown({
   results,
   isLoading,
   error,
-  onClose,
+  onLinkClick,
 }: SearchDropdownProps) {
   const { query } = useSearchStore();
 
   if (isLoading) {
     return (
-      <div className="absolute top-full mt-1 w-full nav-ul-background z-50 max-h-96 overflow-y-auto">
+      <div className="absolute top-full mt-1 w-full nav-ul-background z-50 max-h-96 overflow-y-auto rounded-lg shadow-dropdown">
         <div className="flex justify-center items-center p-4">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 spinner-color"></div>
         </div>
@@ -29,7 +29,7 @@ export default function SearchDropdown({
 
   if (error) {
     return (
-      <div className="absolute top-full mt-1 w-full nav-ul-background rounded-lg z-50">
+      <div className="absolute top-full mt-1 w-full nav-ul-background rounded-lg z-50 shadow-dropdown">
         <div className="p-3 text-red-500">{error}</div>
       </div>
     );
@@ -37,10 +37,8 @@ export default function SearchDropdown({
 
   if (results.length === 0) {
     return (
-      <div className="absolute top-full mt-1 w-full nav-ul-background rounded-lg z-50">
-        <div className="p-3 text-neutral-500 dark:text-neutral-400">
-          No results found
-        </div>
+      <div className="absolute top-full mt-1 w-full nav-ul-background rounded-lg z-50 shadow-dropdown">
+        <div className="p-3">No results found</div>
       </div>
     );
   }
@@ -53,8 +51,13 @@ export default function SearchDropdown({
     .filter((result) => result.type === "news")
     .slice(0, 3);
 
+  const handleItemClick = (e: React.MouseEvent) => {
+    // Call the parent's link click handler
+    onLinkClick();
+  };
+
   return (
-    <div className="absolute top-full mt-1 w-full nav-ul-background rounded-lg z-50 max-h-96 overflow-y-auto search-results-container">
+    <div className="absolute top-full mt-1 w-full nav-ul-background rounded-lg z-50 max-h-96 overflow-y-auto search-results-container shadow-dropdown">
       {gameResults.length > 0 && (
         <div>
           <div className="p-2 font-semibold text-sm search-dropdown-border">
@@ -64,8 +67,12 @@ export default function SearchDropdown({
             <Link
               key={result.id}
               to={`/games/${result.id}`}
-              onClick={onClose}
+              onClick={handleItemClick}
               className="block search-dropdown search-dropdown-border"
+              onMouseDown={(e) => {
+                // This is crucial - prevents focus loss which causes flickering
+                e.preventDefault();
+              }}
             >
               <div className="p-2 flex items-center space-x-2">
                 <img
@@ -96,8 +103,11 @@ export default function SearchDropdown({
             <Link
               key={result.id}
               to={`/news/${result.id}`}
-              onClick={onClose}
+              onClick={handleItemClick}
               className="block search-dropdown search-dropdown-border"
+              onMouseDown={(e) => {
+                e.preventDefault();
+              }}
             >
               <div className="p-2 flex items-center space-x-2">
                 <img
@@ -121,8 +131,12 @@ export default function SearchDropdown({
 
       <Link
         to={`/search?q=${encodeURIComponent(query)}&type=games`}
-        onClick={onClose}
+        onClick={handleItemClick}
         className="block p-3 text-center text-sm search-dropdown"
+        onMouseDown={(e) => {
+          // Prevent the default behavior to avoid any flicker
+          e.preventDefault();
+        }}
       >
         See all results
       </Link>

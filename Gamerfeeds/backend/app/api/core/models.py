@@ -1,11 +1,41 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
-from sqlalchemy import String, func, ForeignKey, Text, DateTime, Float
+from sqlalchemy import Boolean, String, func, ForeignKey, Text, DateTime, Float
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
     pass
+
+
+class Token(Base):
+    __tablename__ = 'tokens'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    created: Mapped[datetime] = mapped_column(
+        default=lambda: datetime.now(timezone.utc))
+    token: Mapped[str] = mapped_column(unique=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey('users.id'), nullable=False)
+
+    # Relationships
+    user: Mapped['User'] = relationship(back_populates='tokens')
+
+
+class PasswordResetToken(Base):
+    __tablename__ = 'password_reset_tokens'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    created: Mapped[datetime] = mapped_column(
+        default=lambda: datetime.now(timezone.utc)
+    )
+    token: Mapped[str] = mapped_column(unique=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey('users.id'), nullable=False)
+    user: Mapped['User'] = relationship(back_populates='reset_tokens')
+    used: Mapped[bool] = mapped_column(
+        default=False
+    )
 
 
 class User(Base):
@@ -18,9 +48,15 @@ class User(Base):
     lastname: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str] = mapped_column(
         String(255), nullable=False, unique=True)
-    hash_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False)
+
+    # Relationships
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
+    tokens: Mapped[List['Token']] = relationship(back_populates='user')
+    reset_tokens: Mapped[List['PasswordResetToken']
+                         ] = relationship(back_populates='user')
 
 
 class Author(Base):

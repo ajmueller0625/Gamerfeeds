@@ -1,20 +1,33 @@
-import { ChevronDown, ChevronUp, Moon, Search, Sun, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Menu,
+  Moon,
+  Search,
+  Sun,
+  User,
+  X,
+  LogOut,
+  LogIn,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useThemeStore } from "../store/themeStore";
 import useSearchStore from "../store/searchStore";
+import useAuthStore from "../store/authStore";
 import logo from "../assets/logo.png";
 import SearchDropdown from "./SearchDropdown";
 
 export default function Navbar() {
   const [isGameDropdownActive, setGameDropdownState] = useState(false);
+  const [isUserDropdownActive, setUserDropdownState] = useState(false);
   const [isSearchDropdownVisible, setSearchDropdownVisible] = useState(false);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchTimer, setSearchTimer] = useState<number | null>(null);
   const location = useLocation();
   const isSearchPage = location.pathname === "/search";
 
   const { isDarkMode, toggleTheme } = useThemeStore();
+  const { token, userData, logout } = useAuthStore();
   const {
     query,
     setQuery,
@@ -30,7 +43,11 @@ export default function Navbar() {
 
   const searchRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const userDropdownRef = useRef<HTMLLIElement>(null);
   const navigate = useNavigate();
+
+  // Use this ref to track if a navigation is in progress
+  const isNavigating = useRef(false);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -40,6 +57,11 @@ export default function Navbar() {
     }
   }, [isDarkMode]);
 
+  // Reset navigation flag when location changes
+  useEffect(() => {
+    isNavigating.current = false;
+  }, [location]);
+
   // Effect for real-time search with debouncing
   useEffect(() => {
     // Clear previous timer
@@ -47,12 +69,18 @@ export default function Navbar() {
       window.clearTimeout(searchTimer);
     }
 
-    if (query.trim().length >= 2) {
-      // Set dropdown visibility only when search is focused and not on search page
-      setSearchDropdownVisible(isSearchFocused && !isSearchPage);
+    // Only proceed if we're not navigating
+    if (isNavigating.current) {
+      return;
+    }
 
-      // Quick search for dropdown
-      quickSearch(query);
+    if (query.trim().length >= 2) {
+      // Show dropdown only when not on search page
+      if (!isSearchPage && document.activeElement === searchInputRef.current) {
+        setSearchDropdownVisible(true);
+        // Quick search for dropdown
+        quickSearch(query);
+      }
 
       // Debounced query update for search page
       const timer = window.setTimeout(() => {
@@ -90,17 +118,30 @@ export default function Navbar() {
         window.clearTimeout(searchTimer);
       }
     };
-  }, [query, isSearchPage, isSearchFocused]);
+  }, [query, isSearchPage]);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      // Don't close while navigating
+      if (isNavigating.current) {
+        return;
+      }
+
+      // Close search dropdown if clicking outside search area
       if (
         searchRef.current &&
         !searchRef.current.contains(event.target as Node)
       ) {
         setSearchDropdownVisible(false);
-        setIsSearchFocused(false);
+      }
+
+      // Close user dropdown if clicking outside user menu area
+      if (
+        userDropdownRef.current &&
+        !userDropdownRef.current.contains(event.target as Node)
+      ) {
+        setUserDropdownState(false);
       }
     }
 
@@ -114,6 +155,7 @@ export default function Navbar() {
     e.preventDefault();
     if (query.trim()) {
       setDebouncedQuery(query);
+      isNavigating.current = true;
 
       // Get current search parameters to preserve the current type
       const searchParams = new URLSearchParams(location.search);
@@ -141,12 +183,20 @@ export default function Navbar() {
     setSearchDropdownVisible(false);
     if (searchInputRef.current) {
       searchInputRef.current.focus();
-      setIsSearchFocused(true);
     }
   };
 
-  const handleCloseDropdown = () => {
+  // This function will be passed to the SearchDropdown component
+  const handleLinkClick = () => {
+    // Set navigating flag to prevent dropdown state changes during navigation
+    isNavigating.current = true;
     setSearchDropdownVisible(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setUserDropdownState(false);
+    navigate("/");
   };
 
   return (
@@ -166,23 +216,12 @@ export default function Navbar() {
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 onFocus={() => {
-                  setIsSearchFocused(true);
-                  if (query.trim().length >= 2 && !isSearchPage) {
-                    setSearchDropdownVisible(true);
-                  }
-                }}
-                onBlur={(e) => {
-                  // Only blur if we're not clicking inside the dropdown
                   if (
-                    !e.relatedTarget ||
-                    !searchRef.current?.contains(e.relatedTarget as Node)
+                    query.trim().length >= 2 &&
+                    !isSearchPage &&
+                    !isNavigating.current
                   ) {
-                    // We delay this slightly to allow for clicks within the dropdown
-                    setTimeout(() => {
-                      if (document.activeElement !== searchInputRef.current) {
-                        setIsSearchFocused(false);
-                      }
-                    }, 100);
+                    setSearchDropdownVisible(true);
                   }
                 }}
                 className="px-3 py-2 pl-4 pr-10 rounded-lg bg-white text-black focus:outline-none min-w-[250px]"
@@ -201,15 +240,16 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/* Real-time search dropdown - only show when not on search page AND input is focused */}
+            {/* Real-time search dropdown - only show when not on search page */}
             {isSearchDropdownVisible &&
               query.trim().length >= 2 &&
-              !isSearchPage && (
+              !isSearchPage &&
+              !isNavigating.current && (
                 <SearchDropdown
                   results={quickResults}
                   isLoading={isQuickSearching}
                   error={quickSearchError}
-                  onClose={handleCloseDropdown}
+                  onLinkClick={handleLinkClick}
                 />
               )}
           </div>
@@ -282,7 +322,7 @@ export default function Navbar() {
               <div
                 className={`
                     ${isDarkMode ? "translate-x-5" : "translate-x-0"} 
-                    flex items-center justify-center h-5 w-5 transform rounded-full bg-white transition-transform duration-300
+                    flex items-center justify-center h-5 w-5 transform rounded-full bg-white transition-transform duration-300 hover:cursor-pointer
                   `}
               >
                 {isDarkMode ? (
@@ -293,11 +333,59 @@ export default function Navbar() {
               </div>
             </div>
           </button>
-          <Link to="">
-            <button className="font-[Black_Ops_One] text-sm py-2 px-6 rounded-full custom-button hover:cursor-pointer">
-              Sign in
-            </button>
-          </Link>
+
+          {token ? (
+            <li
+              ref={userDropdownRef}
+              className={
+                isUserDropdownActive
+                  ? "menu-ul-background rounded-t-lg list-none relative"
+                  : "list-none relative"
+              }
+              onMouseEnter={() => setUserDropdownState(true)}
+              onMouseLeave={() => setUserDropdownState(false)}
+            >
+              <button className="flex py-2 px-4 rounded-lg nav-ul-background hover:cursor-pointer items-center font-[Black_Ops_One] text-sm">
+                <Menu size={18} />
+                {isUserDropdownActive ? (
+                  <ChevronUp className="ml-1 w-4 h-4" />
+                ) : (
+                  <ChevronDown className="ml-1 w-4 h-4" />
+                )}
+              </button>
+              {isUserDropdownActive && (
+                <ul className="absolute right-0 rounded-tl-lg rounded-b-lg menu-ul-background min-w-[180px] shadow-lg z-50">
+                  <div className="p-3 text-sm">
+                    Signed in as
+                    <br />
+                    <span className="font-semibold">
+                      {userData?.username || userData?.email}
+                    </span>
+                  </div>
+                  <Link to="/me/profile">
+                    <li className="p-3 flex items-center">
+                      <User size={16} className="mr-2" />
+                      Profile
+                    </li>
+                  </Link>
+                  <li
+                    className="p-3 rounded-b-lg flex items-center hover:cursor-pointer"
+                    onClick={handleLogout}
+                  >
+                    <LogOut size={16} className="mr-2" />
+                    Logout
+                  </li>
+                </ul>
+              )}
+            </li>
+          ) : (
+            <Link to="/login">
+              <button className="flex gap-1 items-center font-bold text-sm py-2 px-4 rounded-lg custom-button hover:cursor-pointer">
+                <LogIn size={16} />
+                Login
+              </button>
+            </Link>
+          )}
         </nav>
       </nav>
     </header>
