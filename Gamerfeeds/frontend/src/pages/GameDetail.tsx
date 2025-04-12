@@ -1,12 +1,15 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import useGameStore from "../store/gameStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import GameCarousel from "../components/GameCarousel";
+import CommentsSection from "../components/CommentsSection";
 import { Star, StarHalf } from "lucide-react";
 
 export default function GameDetail() {
   const { gameID } = useParams<{ gameID: string }>();
   const { game, isGameLoading, gameError, fetchGameByID } = useGameStore();
+  const navigate = useNavigate();
+  const [dataChecked, setDataChecked] = useState(false);
 
   const formatDate = (date: Date): string => {
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
@@ -65,8 +68,29 @@ export default function GameDetail() {
   };
 
   useEffect(() => {
-    fetchGameByID(Number(gameID));
-  }, [fetchGameByID, gameID]);
+    // Check if the ID is a valid number
+    const numericID = Number(gameID);
+
+    if (isNaN(numericID)) {
+      // If ID is not a valid number, redirect immediately to 404
+      navigate("/not-found", { replace: true });
+      return;
+    }
+
+    fetchGameByID(numericID);
+  }, [fetchGameByID, gameID, navigate]);
+
+  useEffect(() => {
+    if (!isGameLoading && game.length === 0 && !dataChecked) {
+      setDataChecked(true);
+      // Add a small delay to ensure all state updates are complete
+      const timer = setTimeout(() => {
+        navigate("/not-found", { replace: true });
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isGameLoading, game, navigate, dataChecked]);
 
   if (isGameLoading) {
     return (
@@ -82,12 +106,9 @@ export default function GameDetail() {
     );
   }
 
-  if (game.length === 0) {
-    return (
-      <div className="text-white text-center p-5">
-        No game found with ID: {gameID}
-      </div>
-    );
+  if (game.length === 0 && !isGameLoading) {
+    // We'll handle redirection in the useEffect above
+    return null;
   }
 
   const currentGame = game[0];
@@ -99,7 +120,7 @@ export default function GameDetail() {
         Game Details
       </h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         {/* Left Column - Cover Image and Key Info */}
         <div className="card-background p-4 rounded-lg">
           {/* Cover Image */}
@@ -231,6 +252,11 @@ export default function GameDetail() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Comments Section */}
+      <div className="p-4 mt-6">
+        <CommentsSection contentType="game" contentId={Number(gameID)} />
       </div>
     </div>
   );

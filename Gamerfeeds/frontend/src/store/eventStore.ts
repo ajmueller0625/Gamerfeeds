@@ -97,14 +97,17 @@ const useEventStore = create<EventState>((set) => ({
             const response = await fetch(`${API_URL}/events/${id}`);
 
             if(!response.ok) {
-                throw Error(`Failed to fetch event with ID ${id}`);
+                // Clear event when not found or any other error
+                set({ event: null, isEventLoading: false, eventError: `Failed to fetch event with ID ${id}` });
+                return;
             }
 
             const data = await response.json();
             set({ event: data, isEventLoading: false, eventError: null });
 
         } catch (error) {
-            set({ eventError: (error as Error).message, isEventLoading: false });
+            // Clear event on error
+            set({ event: null, eventError: (error as Error).message, isEventLoading: false });
         }
     },
 }));

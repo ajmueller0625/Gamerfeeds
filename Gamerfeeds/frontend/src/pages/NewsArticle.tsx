@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import useNewsStore from "../store/newsStore";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import CommentsSection from "../components/CommentsSection";
 
 export default function NewsArticle() {
   const { newsID } = useParams<{ newsID: string }>();
@@ -14,9 +15,33 @@ export default function NewsArticle() {
     return `${month}/${day}/${year}`;
   };
 
+  const navigate = useNavigate();
+  const [dataChecked, setDataChecked] = useState(false);
+
   useEffect(() => {
-    fetchNewsByID(Number(newsID));
-  }, [fetchNewsByID]);
+    // Check if the ID is a valid number
+    const numericID = Number(newsID);
+
+    if (isNaN(numericID)) {
+      // If ID is not a valid number, redirect immediately to 404
+      navigate("/not-found", { replace: true });
+      return;
+    }
+
+    fetchNewsByID(numericID);
+  }, [fetchNewsByID, newsID, navigate]);
+
+  useEffect(() => {
+    if (!isNewsLoading && news.length === 0 && !dataChecked) {
+      setDataChecked(true);
+      // Add a small delay to ensure all state updates are complete
+      const timer = setTimeout(() => {
+        navigate("/not-found", { replace: true });
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isNewsLoading, news, navigate, dataChecked]);
 
   if (isNewsLoading) {
     return (
@@ -32,12 +57,9 @@ export default function NewsArticle() {
     );
   }
 
-  if (news.length === 0) {
-    return (
-      <div className="text-white text-center p-5">
-        No news found with ID: {newsID}
-      </div>
-    );
+  if (news.length === 0 && !isNewsLoading) {
+    // We'll handle redirection in the useEffect above
+    return null;
   }
 
   const newsData = news[0];
@@ -87,6 +109,11 @@ export default function NewsArticle() {
               {newsData.source_name}
             </a>
           </h3>
+        </div>
+
+        {/* Comments Section*/}
+        <div className="p-5">
+          <CommentsSection contentType="news" contentId={Number(newsID)} />
         </div>
       </div>
     </div>

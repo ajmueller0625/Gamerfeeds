@@ -66,6 +66,60 @@ def send_password_reset_email(email: str, token: str):
         return False
 
 
+def send_contact_email(sender_email: str, subject: str, content: str):
+    """
+    Sends a contact form email to the admin email
+
+    Args:
+        sender_email: The email of the person who sent the message
+        subject: The subject of the contact form
+        content: The message content
+
+    Returns:
+        bool: True if email was sent successfully, False otherwise
+    """
+    # The admin email that will receive contact form submissions
+    # Same as the sender in password reset
+    admin_email = "aj.mueller@gamerfeeds.se"
+
+    message = {
+        "From": admin_email,  # Sending from the same address
+        "To": admin_email,    # To the admin
+        "Subject": f"Contact Form: {subject}",
+        "HtmlBody": f'''
+            <h2>New Contact Form Submission</h2>
+            <p><strong>From:</strong> {sender_email}</p>
+            <p><strong>Subject:</strong> {subject}</p>
+            <h3>Message:</h3>
+            <p>{content}</p>
+        ''',
+        "ReplyTo": sender_email,  # Set reply-to as the sender's email
+        "MessageStream": "outbound",
+    }
+
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "X-Postmark-Server-Token": settings.POSTMARK_TOKEN,
+    }
+
+    try:
+        response = requests.post(
+            "https://api.postmarkapp.com/email",
+            headers=headers,
+            data=json.dumps(message),
+        )
+        response.raise_for_status()
+        print(
+            f"Contact email sent from {sender_email}: {response.status_code}")
+        return True
+    except requests.exceptions.RequestException as e:
+        print(f"Failed to send contact email from {sender_email}: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"Response content: {e.response.content}")
+        return False
+
+
 def verify_password_reset_token(token: str, db: Session) -> User | None:
 
     expiry_minutes = settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES

@@ -350,14 +350,17 @@ const useGameStore = create<GameState>((set) => ({
             const response = await fetch(`${API_URL}/games/${id}`);
 
             if (!response.ok) {
-                throw Error(`Failed to fetch game with ID: ${id}`);
+                // Clear game array when not found or any other error
+                set({ game: [], isGameLoading: false, gameError: `Failed to fetch game with ID: ${id}` });
+                return;
             }
 
             const data = await response.json();
             set({ game: data, isGameLoading: false, gameError: null });
 
         } catch (error) {
-            set({ gameError: (error as Error).message, isGameLoading: false });
+            // Clear game array on error
+            set({ game: [], gameError: (error as Error).message, isGameLoading: false });
         }
     }
 }));

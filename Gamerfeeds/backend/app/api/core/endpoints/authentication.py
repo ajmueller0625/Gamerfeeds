@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.api.db_setup import get_db
 from app.api.core.models import Token, User
 from app.api.core.schemas import (
+    ContactFormSchema,
     PasswordResetConfirmSchema,
     PasswordResetRequestSchema,
     TokenSchema,
@@ -22,6 +23,7 @@ from app.email import (
     generate_password_reset_token,
     get_user_by_email,
     invalidate_password_reset_token,
+    send_contact_email,
     send_password_reset_email,
     verify_password_reset_token,
 )
@@ -148,3 +150,23 @@ def check_username_exists(username: str, db: Session = Depends(get_db)):
     user = db.execute(select(User).where(
         User.username == username)).scalars().first()
     return {"exists": user is not None}
+
+
+@router.post("/contact", status_code=status.HTTP_200_OK)
+def submit_contact_form(
+    contact_form: ContactFormSchema,
+    background_tasks: BackgroundTasks,
+):
+    """
+    Submit a contact form which will send an email to the admin
+    """
+    background_tasks.add_task(
+        send_contact_email,
+        contact_form.email,
+        contact_form.title,
+        contact_form.content
+    )
+
+    return {
+        "message": "Your message has been sent successfully! We will get back to you soon."
+    }

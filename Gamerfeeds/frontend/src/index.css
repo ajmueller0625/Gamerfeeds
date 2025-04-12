@@ -181,3 +181,11 @@ footer {
 .submit-button:hover {
     background-color: var(--submit-button-hover);
 }
+
+.discussion-background {
+    background-color: var(--card-bg);
+}
+
+.discussion-background:hover {
+    background-color: var(--filter-button-hover);
+}

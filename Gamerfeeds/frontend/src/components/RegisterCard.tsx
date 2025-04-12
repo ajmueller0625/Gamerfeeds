@@ -1,9 +1,18 @@
-import { useState, FormEvent, ChangeEvent } from "react";
+import { useState, FormEvent, ChangeEvent, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { User } from "lucide-react";
+import useAuthStore from "../store/authStore";
 
 export default function RegisterCard() {
   const API_URL = import.meta.env.VITE_API_URL;
+  const {
+    register,
+    error: storeError,
+    isLoading,
+    clearError,
+    registrationSuccess,
+    resetRegistrationSuccess,
+  } = useAuthStore();
 
   let navigate = useNavigate();
 
@@ -26,12 +35,20 @@ export default function RegisterCard() {
   const [firstNameError, setFirstNameError] = useState<string[]>([]);
   const [lastNameError, setLastNameError] = useState<string[]>([]);
   const [termsError, setTermsError] = useState("");
-  const [serverError, setServerError] = useState("");
 
   // Loading states
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Check if registration was successful and navigate to login
+  useEffect(() => {
+    if (registrationSuccess) {
+      // Clear the success flag to prevent future redirects
+      resetRegistrationSuccess();
+      // Navigate to login page
+      navigate("/login");
+    }
+  }, [registrationSuccess, navigate, resetRegistrationSuccess]);
 
   // Better autofill handling - more aggressive styles to ensure text is always visible
   const autofillOverrideStyle = `
@@ -249,7 +266,7 @@ export default function RegisterCard() {
 
   async function submitRegister(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setServerError("");
+    clearError(); // Clear any previous errors from the store
 
     // Run all validations
     const isEmailValid = await validateEmail();
@@ -269,49 +286,20 @@ export default function RegisterCard() {
       isLastNameValid &&
       areTermsAccepted
     ) {
-      setIsSubmitting(true);
       try {
-        const response = await fetch(`${API_URL}/auth/user/create`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            username,
-            firstname: firstName, // Make sure these match your backend field names
-            lastname: lastName,
-            password: password,
-          }),
+        // Use the register function from authStore
+        await register({
+          email,
+          username,
+          firstname: firstName,
+          lastname: lastName,
+          password: password,
         });
 
-        if (response.ok) {
-          console.log("Registration successful");
-          navigate("/login?registered=true"); // Add a query param to show a success message on login page
-        } else {
-          const data = await response.json();
-          console.error("Registration failed:", data);
-
-          // Extract specific error messages if available
-          if (data.detail && typeof data.detail === "object") {
-            if (data.detail.email) {
-              setEmailError([data.detail.email]);
-            }
-            if (data.detail.username) {
-              setUsernameError([data.detail.username]);
-            }
-            setServerError("Please correct the errors above.");
-          } else {
-            setServerError(
-              data.detail || "Registration failed. Please try again."
-            );
-          }
-        }
+        // The redirection will be handled by the useEffect watching registrationSuccess
       } catch (error) {
-        console.error("Error during registration:", error);
-        setServerError("Network error. Please try again later.");
-      } finally {
-        setIsSubmitting(false);
+        // Error handling is done by the store
+        console.error("Registration error:", error);
       }
     }
   }
@@ -324,9 +312,9 @@ export default function RegisterCard() {
             <h2 className="text-2xl font-medium">Create Your Account</h2>
           </div>
 
-          {serverError && (
+          {storeError && (
             <div className="text-center text-red-500 px-4 mb-4">
-              {serverError}
+              {storeError}
             </div>
           )}
 
@@ -349,6 +337,7 @@ export default function RegisterCard() {
                 className="mt-1 block w-full rounded-md border border-gray-300 text-black bg-white p-2"
                 style={{ backgroundColor: "white", color: "black" }}
                 placeholder="Enter your first name"
+                disabled={isLoading}
               />
               {firstNameError.length > 0 && (
                 <div className="text-red-500 text-sm mt-1">
@@ -373,6 +362,7 @@ export default function RegisterCard() {
                 className="mt-1 block w-full rounded-md border border-gray-300 text-black bg-white p-2"
                 style={{ backgroundColor: "white", color: "black" }}
                 placeholder="Enter your last name"
+                disabled={isLoading}
               />
               {lastNameError.length > 0 && (
                 <div className="text-red-500 text-sm mt-1">
@@ -407,6 +397,7 @@ export default function RegisterCard() {
                 className="mt-1 block w-full rounded-md border border-gray-300 text-black bg-white p-2"
                 style={{ backgroundColor: "white", color: "black" }}
                 placeholder="Choose a username"
+                disabled={isLoading}
               />
               {isCheckingUsername && (
                 <p className="text-blue-500 text-sm mt-1">
@@ -447,6 +438,7 @@ export default function RegisterCard() {
                 className="mt-1 block w-full rounded-md border border-gray-300 text-black bg-white p-2"
                 style={{ backgroundColor: "white", color: "black" }}
                 placeholder="Enter your email address"
+                disabled={isLoading}
               />
               {isCheckingEmail && (
                 <p className="text-blue-500 text-sm mt-1">
@@ -485,6 +477,7 @@ export default function RegisterCard() {
                 className="mt-1 block w-full rounded-md border border-gray-300 text-black bg-white p-2"
                 style={{ backgroundColor: "white", color: "black" }}
                 placeholder="Create a password"
+                disabled={isLoading}
               />
               {passwordError.length > 0 && (
                 <div className="text-red-500 text-sm mt-1">
@@ -517,6 +510,7 @@ export default function RegisterCard() {
                 className="mt-1 block w-full rounded-md border border-gray-300 text-black bg-white p-2"
                 style={{ backgroundColor: "white", color: "black" }}
                 placeholder="Confirm your password"
+                disabled={isLoading}
               />
               {confirmPasswordError.length > 0 && (
                 <div className="text-red-500 text-sm mt-1">
@@ -543,6 +537,7 @@ export default function RegisterCard() {
                   }}
                   onBlur={() => validateTerms()}
                   className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                  disabled={isLoading}
                 />
               </div>
               <div className="ml-3 text-sm">
@@ -559,11 +554,11 @@ export default function RegisterCard() {
             <div className="pt-4">
               <button
                 type="submit"
-                className="w-full flex justify-center items-center text-white py-2 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium submit-button hover:cursor-pointer"
-                disabled={isSubmitting}
+                className="w-full flex justify-center items-center text-white py-2 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium submit-button hover:cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                disabled={isLoading}
               >
                 <User size={16} className="mr-1" />
-                {isSubmitting ? "Creating Account..." : "Register"}
+                {isLoading ? "Creating Account..." : "Register"}
               </button>
             </div>
 
@@ -575,6 +570,7 @@ export default function RegisterCard() {
                   type="button"
                   onClick={() => navigate("/login")}
                   className="underline hover:cursor-pointer hover:text-blue-500 focus:outline-none"
+                  disabled={isLoading}
                 >
                   Log in
                 </button>

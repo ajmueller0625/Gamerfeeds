@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import List
 from sqlalchemy import Boolean, String, func, ForeignKey, Text, DateTime, Float
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, backref
 
 
 class Base(DeclarativeBase):
@@ -57,6 +57,9 @@ class User(Base):
     tokens: Mapped[List['Token']] = relationship(back_populates='user')
     reset_tokens: Mapped[List['PasswordResetToken']
                          ] = relationship(back_populates='user')
+    comments: Mapped[List['Comment']] = relationship(back_populates='user')
+    discussions: Mapped[List['Discussion']
+                        ] = relationship(back_populates='user')
 
 
 class Author(Base):
@@ -101,6 +104,9 @@ class News(Base):
     source_id: Mapped[int] = mapped_column(ForeignKey(
         'source_names.id', ondelete='CASCADE'), nullable=False)
 
+    comments: Mapped[List['Comment']] = relationship(
+        secondary='news_comments', back_populates='news')
+
 
 class Game(Base):
     __tablename__ = 'games'
@@ -134,6 +140,8 @@ class Game(Base):
         secondary='game_screenshots', back_populates='games')
     videos: Mapped[List['Video']] = relationship(
         secondary='game_videos', back_populates='games')
+    comments: Mapped[List['Comment']] = relationship(
+        secondary='game_comments', back_populates='games')
 
 
 class GameDataType(Base):
@@ -307,3 +315,83 @@ class EventVideo(Base):
         'events.id', ondelete='CASCADE'), primary_key=True)
     video_id: Mapped[int] = mapped_column(ForeignKey(
         'videos.id', ondelete='CASCADE'), primary_key=True)
+
+
+class Comment(Base):
+    __tablename__ = 'comments'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    # User who created the comment
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    user: Mapped['User'] = relationship(back_populates='comments')
+
+    # Optional parent comment reference (for replies)
+    parent_id: Mapped[int | None] = mapped_column(
+        ForeignKey('comments.id', ondelete='CASCADE'), nullable=True)
+    replies: Mapped[List['Comment']] = relationship(
+        'Comment',
+        backref=backref('parent', remote_side=[id]),
+        cascade="all, delete-orphan")
+
+    # Relationships to bridge tables
+    games: Mapped[List['Game']] = relationship(
+        secondary='game_comments', back_populates='comments')
+    news: Mapped[List['News']] = relationship(
+        secondary='news_comments', back_populates='comments')
+    discussions: Mapped[List['Discussion']] = relationship(
+        secondary='discussion_comments', back_populates='comments')
+
+
+class GameComment(Base):
+    __tablename__ = 'game_comments'
+
+    comment_id: Mapped[int] = mapped_column(
+        ForeignKey('comments.id', ondelete='CASCADE'), primary_key=True)
+    game_id: Mapped[int] = mapped_column(
+        ForeignKey('games.id', ondelete='CASCADE'), primary_key=True)
+
+
+class NewsComment(Base):
+    __tablename__ = 'news_comments'
+
+    comment_id: Mapped[int] = mapped_column(
+        ForeignKey('comments.id', ondelete='CASCADE'), primary_key=True)
+    news_id: Mapped[int] = mapped_column(
+        ForeignKey('news.id', ondelete='CASCADE'), primary_key=True)
+
+
+class Discussion(Base):
+    __tablename__ = 'discussions'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    # User who created the discussion
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    user: Mapped['User'] = relationship(back_populates='discussions')
+
+    # Relationships to comments
+    comments: Mapped[List['Comment']] = relationship(
+        secondary='discussion_comments', back_populates='discussions')
+
+
+class DiscussionComment(Base):
+    __tablename__ = 'discussion_comments'
+
+    comment_id: Mapped[int] = mapped_column(
+        ForeignKey('comments.id', ondelete='CASCADE'), primary_key=True)
+    discussion_id: Mapped[int] = mapped_column(
+        ForeignKey('discussions.id', ondelete='CASCADE'), primary_key=True)

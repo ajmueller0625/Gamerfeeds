@@ -1,6 +1,6 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import useEventStore from "../store/eventStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Facebook,
   Instagram,
@@ -14,10 +14,33 @@ import {
 export default function EventDetail() {
   const { eventID } = useParams<{ eventID: string }>();
   const { event, isEventLoading, eventError, fetchEventByID } = useEventStore();
+  const navigate = useNavigate();
+  const [dataChecked, setDataChecked] = useState(false);
 
   useEffect(() => {
-    fetchEventByID(Number(eventID));
-  }, [fetchEventByID, eventID]);
+    // Check if the ID is a valid number
+    const numericID = Number(eventID);
+
+    if (isNaN(numericID)) {
+      // If ID is not a valid number, redirect immediately to 404
+      navigate("/not-found", { replace: true });
+      return;
+    }
+
+    fetchEventByID(numericID);
+  }, [fetchEventByID, eventID, navigate]);
+
+  useEffect(() => {
+    if (!isEventLoading && !event && !dataChecked) {
+      setDataChecked(true);
+      // Add a small delay to ensure all state updates are complete
+      const timer = setTimeout(() => {
+        navigate("/not-found", { replace: true });
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isEventLoading, event, navigate, dataChecked]);
 
   // Function to convert regular URLs to embed URLs
   const getEmbedUrl = (url: string): string => {
@@ -103,6 +126,11 @@ export default function EventDetail() {
     return (
       <div className="text-red-500 text-center p-5">Error: {eventError}</div>
     );
+  }
+
+  if (!event && !isEventLoading) {
+    // We'll handle redirection in the useEffect above
+    return null;
   }
 
   // Format the date with time in local timezone

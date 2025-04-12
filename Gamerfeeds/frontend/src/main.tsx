@@ -19,6 +19,13 @@ import ChangePassword from "./pages/ChangePassword";
 import Register from "./pages/Register";
 import ForgetPassword from "./pages/ForgetPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Discussion from "./pages/Discussion";
+import DiscussionDetail from "./pages/DiscussionDetail";
+import NewDiscussion from "./pages/NewDiscussion";
+import EditDiscussion from "./pages/EditDiscussion";
+import AboutUs from "./pages/AboutUs";
+import ContactUs from "./pages/ContactUs";
+import NotFound from "./pages/NotFound";
 
 const router = createBrowserRouter([
   {
@@ -88,6 +95,38 @@ const router = createBrowserRouter([
       {
         path: "/reset-password",
         element: <ResetPassword />,
+      },
+      {
+        path: "/discussion",
+        element: <Discussion />,
+      },
+      {
+        path: "/discussion/:discussionId",
+        element: <DiscussionDetail />,
+      },
+      {
+        path: "/discussion/new",
+        element: <NewDiscussion />,
+      },
+      {
+        path: "/discussion/edit/:discussionId",
+        element: <EditDiscussion />,
+      },
+      {
+        path: "/aboutus",
+        element: <AboutUs />,
+      },
+      {
+        path: "/contactus",
+        element: <ContactUs />,
+      },
+      {
+        path: "/not-found",
+        element: <NotFound />,
+      },
+      {
+        path: "*",
+        element: <NotFound />,
       },
     ],
   },

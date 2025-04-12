@@ -210,14 +210,17 @@ const useNewsStore = create<NewsState>((set) =>({
             const response = await fetch(`${API_URL}/news/${id}`);
 
             if (!response.ok) {
-                throw Error(`Failed to fetch news with id ${id}`);
+                // Clear news array when not found or any other error
+                set({news: [], isNewsLoading: false, newsError: `Failed to fetch news with id ${id}`});
+                return;
             }
 
             const data = await response.json();
             set({news: data, isNewsLoading: false, newsError: null});
         
         } catch (error) {
-            set({newsError: (error as Error).message, isNewsLoading: false});
+            // Clear news array on error
+            set({news: [], newsError: (error as Error).message, isNewsLoading: false});
         } 
     },
 }));

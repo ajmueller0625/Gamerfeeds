@@ -298,7 +298,7 @@ export default function Navbar() {
             <Link to="/events">
               <li className="py-2 px-6 rounded-lg nav-hover-color">Events</li>
             </Link>
-            <Link to="">
+            <Link to="/discussion">
               <li className="py-2 px-6 rounded-lg nav-hover-color">
                 Discussion
               </li>

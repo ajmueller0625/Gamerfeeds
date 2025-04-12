@@ -4,8 +4,7 @@ import { useState } from "react";
 import { LogIn } from "lucide-react";
 
 export default function LoginCard() {
-  const API_URL = import.meta.env.VITE_API_URL;
-  const { setToken, fetchUser } = useAuthStore();
+  const { login, error: storeError, isLoading, clearError } = useAuthStore();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -13,8 +12,6 @@ export default function LoginCard() {
 
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
-
-  const [serverError, setServerError] = useState("");
 
   function validateEmail() {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -42,37 +39,23 @@ export default function LoginCard() {
 
   async function submitLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setServerError(""); // Reset server error before each login attempt
+    clearError(); // Reset any previous errors
+
     const isEmailValid = validateEmail();
     const isPasswordValid = validatePassword();
 
     if (isEmailValid && isPasswordValid) {
-      const formData = new FormData();
-      formData.append("username", email); // Use 'username' or 'email' as needed by your backend
-      formData.append("password", password);
-
       try {
-        const response = await fetch(`${API_URL}/auth/token`, {
-          method: "POST",
-          body: formData,
-        });
+        // Use the login method from authStore
+        await login(email, password);
 
-        if (response.status === 200) {
-          const data = await response.json();
-          setToken(data.access_token); // Save the token in the global state
-          await fetchUser(); // Fetch user data immediately after login
-          navigate("/"); // Redirect to home page instead of /general
-        } else if (response.status === 400 || response.status === 401) {
-          const data = await response.json();
-          setServerError(data.detail); // Set server error based on the response
-        } else {
-          console.log("Login Failed");
-          setServerError(
-            "An unexpected error occurred. Please try again later."
-          );
+        // If login was successful (no error thrown), navigate to home
+        if (!storeError) {
+          navigate("/");
         }
       } catch (error) {
-        setServerError("Network error. Please check your connection.");
+        // Error handling is done by the store
+        console.error("Login failed", error);
       }
     } else {
       console.log("Validation errors");
@@ -99,8 +82,8 @@ export default function LoginCard() {
 
   return (
     <div className="w-full max-w-md card-background p-10 rounded-lg shadow-lg">
-      {serverError && (
-        <div className="text-red-500 px-4 mb-3 text-center">{serverError}</div>
+      {storeError && (
+        <div className="text-red-500 px-4 mb-3 text-center">{storeError}</div>
       )}
 
       <style>{autofillOverrideStyle}</style>
@@ -118,6 +101,7 @@ export default function LoginCard() {
             className={inputStyle}
             placeholder="Enter your email address"
             style={{ backgroundColor: "white" }}
+            disabled={isLoading}
           />
           {emailError && (
             <p className="text-red-500 text-sm mt-1">{emailError}</p>
@@ -137,6 +121,7 @@ export default function LoginCard() {
             className={inputStyle}
             placeholder="Enter your password"
             style={{ backgroundColor: "white" }}
+            disabled={isLoading}
           />
           {passwordError && (
             <p className="text-red-500 text-sm mt-1">{passwordError}</p>
@@ -146,10 +131,11 @@ export default function LoginCard() {
         <div>
           <button
             type="submit"
-            className="w-full flex items-center gap-2 text-white justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-base font-medium submit-button hover:cursor-pointer"
+            className="w-full flex items-center gap-2 text-white justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium submit-button hover:cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+            disabled={isLoading}
           >
             <LogIn size={16} />
-            Login
+            {isLoading ? "Logging in..." : "Login"}
           </button>
         </div>
       </form>
