@@ -163,6 +163,7 @@ const useNewsStore = create<NewsState>((set) =>({
         try {
             set({ isNewsLoading: true, newsError: null });
             let url = `${API_URL}/news?page=${page}&perPage=${perPage}`
+            console.log("API_URL:", API_URL);
 
             if (source) {
                 url += `&source=${encodeURIComponent(source)}`;
