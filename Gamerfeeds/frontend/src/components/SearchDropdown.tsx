@@ -51,7 +51,7 @@ export default function SearchDropdown({
     .filter((result) => result.type === "news")
     .slice(0, 3);
 
-  const handleItemClick = (e: React.MouseEvent) => {
+  const handleItemClick = () => {
     // Call the parent's link click handler
     onLinkClick();
   };
