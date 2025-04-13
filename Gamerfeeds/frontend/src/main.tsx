@@ -27,110 +27,113 @@ import AboutUs from "./pages/AboutUs";
 import ContactUs from "./pages/ContactUs";
 import NotFound from "./pages/NotFound";
 
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Layout />,
-    children: [
-      {
-        path: "",
-        element: <Home />,
-      },
-      {
-        path: "/news",
-        element: <News />,
-      },
-      {
-        path: "/topgames",
-        element: <TopGames />,
-      },
-      {
-        path: "/latestgames",
-        element: <LatestGames />,
-      },
-      {
-        path: "/upcominggames",
-        element: <UpcomingGames />,
-      },
-      {
-        path: "/news/:newsID",
-        element: <NewsArticle />,
-      },
-      {
-        path: "/games/:gameID",
-        element: <GameDetail />,
-      },
-      {
-        path: "/events",
-        element: <Event />,
-      },
-      {
-        path: "/events/:eventID",
-        element: <EventDetail />,
-      },
-      {
-        path: "/search",
-        element: <SearchResults />,
-      },
-      {
-        path: "/login",
-        element: <Login />,
-      },
-      {
-        path: "/me/profile",
-        element: <Profile />,
-      },
-      {
-        path: "/me/change-password",
-        element: <ChangePassword />,
-      },
-      {
-        path: "/login/register",
-        element: <Register />,
-      },
-      {
-        path: "/login/forget-password",
-        element: <ForgetPassword />,
-      },
-      {
-        path: "/reset-password",
-        element: <ResetPassword />,
-      },
-      {
-        path: "/discussion",
-        element: <Discussion />,
-      },
-      {
-        path: "/discussion/:discussionId",
-        element: <DiscussionDetail />,
-      },
-      {
-        path: "/discussion/new",
-        element: <NewDiscussion />,
-      },
-      {
-        path: "/discussion/edit/:discussionId",
-        element: <EditDiscussion />,
-      },
-      {
-        path: "/aboutus",
-        element: <AboutUs />,
-      },
-      {
-        path: "/contactus",
-        element: <ContactUs />,
-      },
-      {
-        path: "/not-found",
-        element: <NotFound />,
-      },
-      {
-        path: "*",
-        element: <NotFound />,
-      },
-    ],
-  },
-]);
+const router = createBrowserRouter(
+  [
+    {
+      path: "/",
+      element: <Layout />,
+      children: [
+        {
+          path: "",
+          element: <Home />,
+        },
+        {
+          path: "/news",
+          element: <News />,
+        },
+        {
+          path: "/topgames",
+          element: <TopGames />,
+        },
+        {
+          path: "/latestgames",
+          element: <LatestGames />,
+        },
+        {
+          path: "/upcominggames",
+          element: <UpcomingGames />,
+        },
+        {
+          path: "/news/:newsID",
+          element: <NewsArticle />,
+        },
+        {
+          path: "/games/:gameID",
+          element: <GameDetail />,
+        },
+        {
+          path: "/events",
+          element: <Event />,
+        },
+        {
+          path: "/events/:eventID",
+          element: <EventDetail />,
+        },
+        {
+          path: "/search",
+          element: <SearchResults />,
+        },
+        {
+          path: "/login",
+          element: <Login />,
+        },
+        {
+          path: "/me/profile",
+          element: <Profile />,
+        },
+        {
+          path: "/me/change-password",
+          element: <ChangePassword />,
+        },
+        {
+          path: "/login/register",
+          element: <Register />,
+        },
+        {
+          path: "/login/forget-password",
+          element: <ForgetPassword />,
+        },
+        {
+          path: "/reset-password",
+          element: <ResetPassword />,
+        },
+        {
+          path: "/discussion",
+          element: <Discussion />,
+        },
+        {
+          path: "/discussion/:discussionId",
+          element: <DiscussionDetail />,
+        },
+        {
+          path: "/discussion/new",
+          element: <NewDiscussion />,
+        },
+        {
+          path: "/discussion/edit/:discussionId",
+          element: <EditDiscussion />,
+        },
+        {
+          path: "/aboutus",
+          element: <AboutUs />,
+        },
+        {
+          path: "/contactus",
+          element: <ContactUs />,
+        },
+        {
+          path: "/not-found",
+          element: <NotFound />,
+        },
+        {
+          path: "*",
+          element: <NotFound />,
+        },
+      ],
+    },
+  ],
+  { basename: import.meta.env.BASE_URL }
+);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
