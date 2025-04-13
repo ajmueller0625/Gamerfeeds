@@ -18,6 +18,7 @@ app.add_middleware(
     allow_origins=[
         "https://gamerfeeds.se",
         "http://gamerfeeds.se",
+        "https://ajmueller0625.github.io/Webbapp-Projekt/",
         "localhost:5173"
     ],
     allow_credentials=True,

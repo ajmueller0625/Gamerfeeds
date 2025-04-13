@@ -6,7 +6,7 @@
   "homepage": "https://ajmueller0625.github.io/Webbapp-Projekt",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build --mode production",
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
