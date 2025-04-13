@@ -1,8 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta http-equiv="refresh" content="0; URL=/" />
+    <meta charset="UTF-8">
+    <script type="text/javascript">
+      // Redirect all unknown routes back to index.html, but keep the path
+      const redirectTo = window.location.origin + "/index.html" + window.location.search + window.location.hash;
+      window.location.replace(redirectTo);
+    </script>
+    <title>Redirecting...</title>
   </head>
   <body>
+    <p>Redirecting to application...</p>
   </body>
 </html>
