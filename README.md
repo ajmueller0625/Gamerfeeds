@@ -21,7 +21,7 @@ It provides a quick overview of what’s happening in the gaming world and lets 
 ## 🚀 Tech Stack
 
 - **Frontend:** TypeScript, React, Tailwind 
-- **Backend (if applicable):** Python / FastAPI
+- **Backend:** Python / FastAPI
 - **APIs:**  
   - [NewsAPI](https://newsapi.org/)  
   - [Twitch API](https://dev.twitch.tv/docs/api/)
